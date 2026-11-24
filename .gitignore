@@ -1,0 +1,7 @@
+# Safety net: never commit secrets from anywhere in the repo
+.env*
+!.env.example
+node_modules/
+
+# Local agent files
+.claude/

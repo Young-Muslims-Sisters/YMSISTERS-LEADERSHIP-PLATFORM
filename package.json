@@ -1,0 +1,18 @@
+{
+  "name": "ymsisters-leadership-platform",
+  "private": true,
+  "description": "Convenience scripts; the app lives in apps/web.",
+  "scripts": {
+    "dev": "npm --prefix apps/web run dev",
+    "build": "npm --prefix apps/web run build",
+    "start": "npm --prefix apps/web run start",
+    "lint": "npm --prefix apps/web run lint",
+    "typecheck": "npm --prefix apps/web run typecheck",
+    "test:e2e": "npm --prefix apps/web run test:e2e",
+    "db:start": "npm --prefix apps/web run db:start",
+    "db:stop": "npm --prefix apps/web run db:stop",
+    "db:status": "npm --prefix apps/web run db:status",
+    "db:reset": "npm --prefix apps/web run db:reset",
+    "db:test": "npm --prefix apps/web run db:test"
+  }
+}
