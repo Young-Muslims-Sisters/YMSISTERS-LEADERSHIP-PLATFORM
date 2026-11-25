@@ -7,6 +7,8 @@ import { supabaseSession } from "@/lib/server/supabase-session";
 
 export async function signInWithGoogle(formData: FormData) {
   const next = safeNext(formData.get("next"));
+  // The local database has no Google provider.
+  if (localLoginEnabled()) redirect(`/login?next=${next}&error=local`);
   const requestHeaders = await headers();
   const origin = requestHeaders.get("origin") ?? `https://${requestHeaders.get("host")}`;
   const db = await supabaseSession();

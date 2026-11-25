@@ -9,6 +9,7 @@ import { signInLocally, signInWithGoogle } from "./actions";
 
 const ERRORS: Record<string, string> = {
   access: `That account doesn’t have access. Please use your YM email, ending in @${YM_DOMAIN}.`,
+  local: "Google sign-in only works on the live site. Use the test buttons below.",
   failed: "We couldn’t sign you in. Please try again.",
 };
 

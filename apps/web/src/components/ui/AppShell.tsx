@@ -4,7 +4,7 @@ import { signOut } from "@/app/login/actions";
 
 type Path = "/directory" | "/admin";
 
-const linkClass = "rounded-lg px-3 py-2 text-[13px] font-semibold text-forest-950 hover:bg-mint-100";
+const linkClass = "rounded-lg px-2 py-2 whitespace-nowrap sm:px-3 text-[13px] font-semibold text-forest-950 hover:bg-mint-100";
 
 // Top bar for signed-in pages. IT admins also get a link between their two pages.
 export function AppShell({ access, active, children }: { access: string; active: Path; children: ReactNode }) {
@@ -12,11 +12,12 @@ export function AppShell({ access, active, children }: { access: string; active:
     <div className="min-h-dvh bg-app">
       <header className="border-b-2 border-cream-line bg-cream">
         <div className="mx-auto flex min-h-16 max-w-[1240px] flex-wrap items-center justify-between gap-x-4 px-4 py-2 sm:px-7">
-          <p className="font-display text-[17px] text-forest-950">YOUNG MUSLIMS</p>
-          <div className="flex items-center gap-1">
+          <Link href="/" aria-label="Young Muslims, start page" className="font-display text-[17px] text-forest-950">YOUNG MUSLIMS</Link>
+          <div className="flex items-center gap-1 max-sm:-ml-2">
+            <Link href="/" className={linkClass}>Form</Link>
             {access === "it_admin" &&
               (active === "/admin" ? (
-                <Link href="/directory" className={linkClass}>Directory</Link>
+                <Link href="/directory" className={linkClass}>Leadership Directory</Link>
               ) : (
                 <Link href="/admin" className={linkClass}>IT Dashboard</Link>
               ))}

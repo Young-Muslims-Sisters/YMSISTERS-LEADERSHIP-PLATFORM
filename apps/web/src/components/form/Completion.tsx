@@ -1,11 +1,15 @@
 import type { RefObject } from "react";
 import { DirectoryLink } from "@/components/ui/DirectoryLink";
 import { BlobCard } from "./BlobCard";
+import { Confetti } from "./Confetti";
 import { FormProgress } from "./FormProgress";
 
-export function Completion({ headingRef, cycleYear }: { headingRef: RefObject<HTMLHeadingElement | null>; cycleYear: number }) {
+type Props = { headingRef: RefObject<HTMLHeadingElement | null>; cycleYear: number; onRestart: () => void };
+
+export function Completion({ headingRef, cycleYear, onRestart }: Props) {
   return (
     <div className="flex min-h-[calc(100dvh-80px)] flex-col">
+      <Confetti />
       <div className="px-4 pt-[25px] sm:px-6">
         <FormProgress current={5} />
       </div>
@@ -14,7 +18,7 @@ export function Completion({ headingRef, cycleYear }: { headingRef: RefObject<HT
           <div aria-hidden className="grid size-16 place-items-center rounded-full bg-mint-100 text-[36px] font-bold text-forest-600">
             ✓
           </div>
-          <p lang="ar" dir="rtl" className="mt-[11px] font-arabic text-[25px] font-semibold text-forest-600">
+          <p lang="ar" dir="rtl" className="arabic-reveal mt-[11px] font-arabic text-[25px] font-semibold text-forest-600">
             جزاكِ الله خيرًا
           </p>
           <h1
@@ -29,6 +33,9 @@ export function Completion({ headingRef, cycleYear }: { headingRef: RefObject<HT
           </h1>
           <p className="mt-5 text-[15px] text-ink">Thank you for helping keep YM connected.</p>
           <div className="mt-6"><DirectoryLink /></div>
+          <button type="button" onClick={onRestart} className="mt-4 px-3 py-2 text-[13px] font-semibold text-forest-600 hover:underline">
+            Back to start
+          </button>
         </BlobCard>
       </main>
     </div>

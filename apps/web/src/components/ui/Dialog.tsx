@@ -14,12 +14,38 @@ type Props = {
 export function Dialog({ title, onClose, variant, children }: Props) {
   const ref = useRef<HTMLDialogElement>(null);
   const titleId = useId();
+  const closeRef = useRef(onClose);
 
   useEffect(() => {
     const dialog = ref.current;
     if (dialog && !dialog.open) dialog.showModal();
     return () => dialog?.close();
   }, []);
+
+  useEffect(() => {
+    closeRef.current = onClose;
+  }, [onClose]);
+
+  // The browser's Back button closes the dialog instead of leaving the page.
+  useEffect(() => {
+    let added = false;
+    const onPop = () => {
+      if (added && window.history.state?.dialog !== titleId) {
+        added = false;
+        closeRef.current();
+      }
+    };
+    const timer = setTimeout(() => {
+      window.history.pushState({ dialog: titleId }, "");
+      added = true;
+    });
+    window.addEventListener("popstate", onPop);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("popstate", onPop);
+      if (added && window.history.state?.dialog === titleId) window.history.back();
+    };
+  }, [titleId]);
 
   return (
     <dialog

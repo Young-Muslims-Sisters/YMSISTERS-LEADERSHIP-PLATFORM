@@ -80,7 +80,7 @@ export function StatusBadge({ status }: { status: Person["status"] }) {
   return <Badge tone={status === "Cloud" ? "purple" : "green"}>{status}</Badge>;
 }
 
-const linkClass = "relative z-10 flex w-fit items-center gap-2 break-all py-0.5 text-forest-600 hover:underline";
+const linkClass = "relative z-10 flex w-fit items-center gap-2 break-all py-0.5 max-lg:py-1.5 text-forest-600 hover:underline";
 const contactIcon = "size-3.5 shrink-0";
 
 const MAX_PILLS = 2;

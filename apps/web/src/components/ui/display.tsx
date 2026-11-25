@@ -56,7 +56,7 @@ export function SearchBox(props: ComponentProps<"input">) {
 }
 
 export function Toolbar({ children }: { children: ReactNode }) {
-  return <div className="flex h-12 shrink-0 items-stretch divide-x divide-white/20 rounded-[9px] bg-forest-950 shadow-sm">{children}</div>;
+  return <div className="relative flex h-12 shrink-0 items-stretch divide-x divide-white/20 rounded-[9px] bg-forest-950 shadow-sm">{children}</div>;
 }
 
 type ToolbarButtonProps = ComponentProps<"button"> & { icon: ReactNode; count?: number };
@@ -65,7 +65,7 @@ export function ToolbarButton({ icon, count = 0, children, ...props }: ToolbarBu
   return (
     <button
       type="button"
-      className="inline-flex h-full flex-1 items-center justify-center gap-2 px-5 text-[14px] font-semibold text-white transition-colors first:rounded-l-[9px] last:rounded-r-[9px] hover:bg-forest-600 [&_svg]:size-[18px]"
+      className="inline-flex h-full flex-1 items-center justify-center gap-2 px-2 sm:px-5 text-[14px] font-semibold text-white transition-colors first:rounded-l-[9px] last:rounded-r-[9px] hover:bg-forest-600 [&_svg]:size-[18px]"
       {...props}
     >
       {icon}

@@ -57,6 +57,10 @@ function screenForField(path: string): Screen {
   return "education";
 }
 
+// What each browser history entry remembers, so Back and Forward move between screens.
+type FormEntry = { id: string; screen: Screen; editing: boolean; depth: number };
+type FormHistory = { id: string; depth: number; reviewDepth: number; done: boolean };
+
 type Props = { reference: ReferenceData; cycleYear: number };
 
 export function AnnualForm({ reference, cycleYear }: Props) {
@@ -69,6 +73,7 @@ export function AnnualForm({ reference, cycleYear }: Props) {
   const [editing, setEditing] = useState(false);
   const headingRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
+  const nav = useRef<FormHistory>({ id: "", depth: 0, reviewDepth: 0, done: false });
 
   const screens = screensFor(values.involvement);
   const index = screens.indexOf(screen);
@@ -92,6 +97,61 @@ export function AnnualForm({ reference, cycleYear }: Props) {
     window.scrollTo({ top: 0 });
     headingRef.current?.focus({ preventScroll: true });
   }, [screen, started, done]);
+
+  // Back and Forward: entries from another page load or a finished form show the start card.
+  useEffect(() => {
+    const onPop = (e: PopStateEvent) => {
+      if (nav.current.done) return;
+      const entry = e.state?.form as FormEntry | undefined;
+      const known = entry && entry.id === nav.current.id;
+      nav.current.depth = known ? entry.depth : 0;
+      setErrors({});
+      setStarted(Boolean(known));
+      if (known) {
+        setScreen(entry.screen);
+        setEditing(entry.editing);
+      }
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+
+  // Reloading or closing the tab would lose the answers, so the browser asks first.
+  useEffect(() => {
+    if (!started || done) return;
+    const warn = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", warn);
+    return () => window.removeEventListener("beforeunload", warn);
+  }, [started, done]);
+
+  // Opens a screen as a new history entry.
+  const go = (to: Screen, edit = false) => {
+    const n = nav.current;
+    n.id ||= Math.random().toString(36).slice(2);
+    n.depth += 1;
+    if (to === "review") n.reviewDepth = n.depth;
+    const entry: FormEntry = { id: n.id, screen: to, editing: edit, depth: n.depth };
+    window.history.pushState({ form: entry }, "");
+    setScreen(to);
+    setEditing(edit);
+    setStarted(true);
+  };
+  const finish = () => {
+    const { depth } = nav.current;
+    nav.current.done = true;
+    setDone(true);
+    // Leave the submitted screens behind so Back cannot submit twice.
+    if (depth > 0) window.history.go(-depth);
+  };
+  const restart = () => {
+    nav.current = { id: "", depth: 0, reviewDepth: 0, done: false };
+    setValues(emptyForm);
+    setErrors({});
+    setDone(false);
+    setStarted(false);
+    setEditing(false);
+    setScreen("personal");
+  };
 
   const validate = (s: Screen): Record<string, string> => {
     const schemas: Partial<Record<Screen, z.ZodType>> = {
@@ -117,32 +177,27 @@ export function AnnualForm({ reference, cycleYear }: Props) {
     const errs = validate(screen);
     if (Object.keys(errs).length) return showErrors(errs);
     setErrors({});
-    setScreen(screens[index + 1]);
+    go(screens[index + 1] ?? "review");
   };
   // Back to review, stopping at any screen the edit left incomplete.
   const returnToReview = () => {
     const target = screens.find((s) => Object.keys(validate(s)).length > 0);
     if (target) {
-      setScreen(target);
+      go(target, true);
       return showErrors(validate(target));
     }
-    setErrors({});
-    setEditing(false);
-    setScreen("review");
+    window.history.go(nav.current.reviewDepth - nav.current.depth);
   };
-  const back = () => {
-    setErrors({});
-    if (index > 0) setScreen(screens[index - 1]);
-  };
+  const back = () => window.history.back();
 
   const err = (path: string) => errors[path];
 
-  if (!started) return <Welcome cycleYear={cycleYear} onStart={() => setStarted(true)} />;
+  if (!started) return <Welcome cycleYear={cycleYear} onStart={() => go("personal")} />;
   if (done) {
     return (
       <>
         <FormHeader />
-        <Completion headingRef={headingRef} cycleYear={cycleYear} />
+        <Completion headingRef={headingRef} cycleYear={cycleYear} onRestart={restart} />
       </>
     );
   }
@@ -179,23 +234,19 @@ export function AnnualForm({ reference, cycleYear }: Props) {
           <ReviewScreen
             values={values}
             reference={reference}
-            onEdit={(s) => {
-              setEditing(true);
-              setScreen(s);
-            }}
+            onEdit={(s) => go(s, true)}
             onBack={back}
             onServerErrors={(errs) => {
-              setEditing(true);
-              setScreen(screenForField(Object.keys(errs)[0] ?? "firstName"));
+              go(screenForField(Object.keys(errs)[0] ?? "firstName"), true);
               setErrors(errs);
             }}
-            onDone={() => setDone(true)}
+            onDone={finish}
           />
         )}
       </main>
 
       {screen !== "review" && (
-        <FormFooter onBack={index > 0 && !editing ? back : undefined}>
+        <FormFooter onBack={editing ? undefined : back}>
           {editing ? (
             <PrimaryButton onClick={returnToReview}>Save & Return to Review</PrimaryButton>
           ) : (

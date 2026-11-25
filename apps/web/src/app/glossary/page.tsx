@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FormHeader } from "@/components/form/FormHeader";
+import { BackToForm } from "@/components/ui/BackToForm";
 import { GLOSSARY } from "@/lib/glossary";
 
 export const metadata: Metadata = { title: "YM Glossary" };
@@ -9,6 +10,7 @@ export default function GlossaryPage() {
     <>
       <FormHeader />
       <main className="mx-auto w-full max-w-[860px] px-4 py-10 sm:px-6">
+        <div className="mb-6"><BackToForm /></div>
         <h1 className="font-display text-[26px] text-forest-950 uppercase sm:text-[32px]">YM Glossary</h1>
         <p className="text-[15px] text-muted">Common terms you’ll see across Young Muslims.</p>
 
@@ -28,6 +30,7 @@ export default function GlossaryPage() {
             </dl>
           </section>
         ))}
+        <div className="mt-8"><BackToForm /></div>
       </main>
     </>
   );

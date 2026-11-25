@@ -28,11 +28,13 @@ test("signed-out visitors are sent to login", async ({ page }) => {
   }
   await expect(page.getByRole("button", { name: "Sign in with YM email" })).toBeVisible();
   await shot(page, "20-login");
+  await page.getByRole("button", { name: "Sign in with YM email" }).click();
+  await expect(page.getByText("Google sign-in only works on the live site")).toBeVisible();
 });
 
 test("the form links to the directory", async ({ page }) => {
   await page.goto("/");
-  await page.getByRole("link", { name: "Go to Directory" }).click();
+  await page.getByRole("link", { name: "Go to Leadership Directory" }).click();
   await expect(page).toHaveURL(/\/login\?next=(\/|%2F)directory/);
 });
 
