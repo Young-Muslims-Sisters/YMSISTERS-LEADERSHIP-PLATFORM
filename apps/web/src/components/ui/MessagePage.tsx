@@ -9,7 +9,7 @@ export function MessagePage({ title, text, children }: { title: string; text: st
   return (
     <div className="flex min-h-dvh flex-col overflow-x-clip">
       <FormHeader />
-      <main className="grid flex-1 place-items-center px-4 py-10">
+      <main className="grid flex-1 place-items-center overflow-clip px-4 py-10">
         <BlobCard labelledBy="message-heading">
           <h1 id="message-heading" className="font-display text-[24px] leading-[1.4] text-forest-950 uppercase sm:text-[28px]">{title}</h1>
           <p className="mt-4 text-[15px] text-ink">{text}</p>

@@ -45,6 +45,20 @@ body {
   outline-offset: 2px;
 }
 
+/* iPhone date fields ignore their width and center their text unless reset. */
+@supports (-webkit-touch-callout: none) {
+  input[type="date"] {
+    appearance: none;
+    min-width: 0;
+    max-width: 100%;
+    background: white url("/form/icon-calendar.svg") no-repeat right 14px center / 18px;
+  }
+  input[type="date"]::-webkit-date-and-time-value {
+    margin: 0;
+    text-align: left;
+  }
+}
+
 /* Each form screen eases in. */
 .screen-enter {
   animation: screen-enter 280ms ease-out;

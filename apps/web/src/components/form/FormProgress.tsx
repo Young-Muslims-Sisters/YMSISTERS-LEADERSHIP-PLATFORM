@@ -27,7 +27,7 @@ export function FormProgress({ current }: Props) {
               {i < FORM_STEPS.length - 1 && (
                 <div
                   aria-hidden
-                  className="absolute top-10 left-[calc(50%+31px)] h-1 w-[calc(100%-62px)] overflow-hidden rounded-full bg-line"
+                  className="absolute top-[31px] left-[calc(50%+26px)] h-1 w-[calc(100%-52px)] sm:top-10 sm:left-[calc(50%+31px)] sm:w-[calc(100%-62px)] overflow-hidden rounded-full bg-line"
                 >
                   <div
                     className={`h-full origin-left rounded-full bg-forest-600 transition-transform duration-500 ease-out motion-reduce:transition-none ${
@@ -36,7 +36,7 @@ export function FormProgress({ current }: Props) {
                   />
                 </div>
               )}
-              <div className={`${last.forward && i === current - 1 ? "step-pop" : ""} ${state === "active" && last.forward ? "[&_img]:delay-400" : ""} relative mt-2 grid h-[67px] w-[62px] place-items-center`}>
+              <div className={`${last.forward && i === current - 1 ? "step-pop" : ""} ${state === "active" && last.forward ? "[&_img]:delay-400" : ""} relative mt-2 grid h-[50px] w-[46px] sm:h-[67px] sm:w-[62px] place-items-center`}>
                 {/* All versions are stacked and cross-faded, so moving between steps is smooth. */}
                 {BLOBS.map((blob) => (
                   <img key={blob} alt="" aria-hidden src={`/form/step-blob-${blob}.svg`}
@@ -45,7 +45,7 @@ export function FormProgress({ current }: Props) {
                 {/* The first step is never upcoming, so it has no "off" icon. */}
                 {(i === 0 ? (["on"] as const) : (["off", "on"] as const)).map((v) => (
                   <img key={v} alt="" aria-hidden src={`/form/icon-${step.icon}-${v}.svg`}
-                    className={`col-start-1 row-start-1 relative max-w-none ${fade((v === "on") === iconOn)}`} />
+                    className={`col-start-1 row-start-1 relative max-w-none max-sm:scale-75 ${fade((v === "on") === iconOn)}`} />
                 ))}
               </div>
               <span
@@ -57,7 +57,7 @@ export function FormProgress({ current }: Props) {
                       : state === "complete"
                         ? "font-medium text-ink"
                         : "font-medium text-muted"
-                } ${state === "active" ? "" : "max-sm:sr-only"}`}
+                } max-sm:sr-only`}
               >
                 {step.label}
                 <span className="sr-only">

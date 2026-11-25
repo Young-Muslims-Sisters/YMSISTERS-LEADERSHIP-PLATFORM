@@ -31,7 +31,7 @@ export function Directory({ people, reference }: { people: Person[]; reference: 
       <PageTitle subtitle="Find and connect with YM leadership across the US.">Leadership Directory</PageTitle>
 
       <div className="mt-6 flex flex-col gap-3 border-b border-sage-300 pb-6 md:flex-row">
-        <SearchBox aria-label="Search the directory" placeholder="Search name, email, phone, role, team, skills…"
+        <SearchBox aria-label="Search the directory" placeholder="Search name, role, team, skills…"
           value={search} onChange={(e) => setSearch(e.target.value)} />
         <Toolbar>
           <ToolbarButton icon={<FilterIcon />} count={applied.length} onClick={() => setDialog("filter")}>Filter</ToolbarButton>
@@ -55,7 +55,7 @@ export function Directory({ people, reference }: { people: Person[]; reference: 
         </div>
       )}
 
-      <h2 aria-live="polite" className="mt-6 mb-2 font-display text-[18px] text-forest-950 uppercase sm:text-[22px]">
+      <h2 aria-live="polite" className="mt-5 mb-3 text-[15px] font-bold text-forest-950 sm:mt-6 sm:mb-2 sm:font-display sm:text-[22px] sm:font-normal sm:uppercase">
         {results.length} {results.length === 1 ? "contact" : "contacts"} found
       </h2>
       <PeopleList people={visible} onOpen={setProfile} />
@@ -102,7 +102,7 @@ function PeopleList({ people, onOpen }: { people: Person[]; onOpen: (p: Person) 
     return <p className="rounded-xl border border-sage-300 bg-white p-8 text-center text-[14px] text-muted">No one matches. Try removing a filter.</p>;
   }
   return (
-    <table className="block w-full rounded-xl border border-sage-300 bg-white text-left text-[13px] lg:table lg:border-separate lg:border-spacing-0 lg:overflow-hidden">
+    <table className="block w-full text-left text-[13px] lg:table lg:rounded-xl lg:border lg:border-sage-300 lg:bg-white lg:border-separate lg:border-spacing-0 lg:overflow-hidden">
       <thead className="bg-mint-50 max-lg:sr-only">
         <tr>
           {["Name", "Role", "Contact", "SR / Region", "NN", "Active Status"].map((h) => (
@@ -110,22 +110,28 @@ function PeopleList({ people, onOpen }: { people: Person[]; onOpen: (p: Person) 
           ))}
         </tr>
       </thead>
-      <tbody className="max-lg:block">
+      <tbody className="max-lg:grid max-lg:gap-3 md:max-lg:grid-cols-2">
         {people.map((p) => (
-          <tr key={p.id} className="relative hover:bg-mint-25 max-lg:flex max-lg:flex-col max-lg:gap-2 max-lg:border-b max-lg:border-line max-lg:p-4 lg:[&>td]:border-b lg:[&>td]:border-line lg:[&>td]:px-4 lg:[&>td]:py-3.5 lg:last:[&>td]:border-b-0">
-            <td>
-              <button type="button" onClick={() => onOpen(p)} className="text-left font-semibold text-forest-950 after:absolute after:inset-0">
+          <tr key={p.id} className="relative hover:bg-mint-25 max-lg:grid max-lg:grid-cols-[1fr_auto] max-lg:content-start max-lg:items-center max-lg:gap-x-3 max-lg:rounded-2xl max-lg:border max-lg:border-sage-200 max-lg:bg-white max-lg:p-4 max-lg:shadow-sm lg:[&>td]:border-b lg:[&>td]:border-line lg:[&>td]:px-4 lg:[&>td]:py-3.5 lg:last:[&>td]:border-b-0">
+            <td className="max-lg:col-start-1 max-lg:row-start-1">
+              <button type="button" onClick={() => onOpen(p)} className="flex items-center gap-3 text-left font-semibold text-forest-950 after:absolute after:inset-0 max-lg:text-[16px]">
+                <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-full bg-mint-100 text-[13px] font-bold text-forest-600 lg:hidden">
+                  {p.firstName[0]}{p.lastName[0]}
+                </span>
                 {fullName(p)}
               </button>
             </td>
-            <td><span className="flex flex-wrap gap-1.5"><RolePills roles={pills(p)} /></span></td>
-            <td>
+            <td className={`max-lg:col-span-2 max-lg:row-start-3 max-lg:mt-3 ${pills(p).length ? "" : "max-lg:hidden"}`}><span className="flex flex-wrap gap-1.5"><RolePills roles={pills(p)} /></span></td>
+            <td className="max-lg:col-span-2 max-lg:row-start-4 max-lg:mt-3 max-lg:border-t max-lg:border-line max-lg:pt-2">
               <a href={`mailto:${p.email}`} className={linkClass}><MailIcon className={contactIcon} />{p.email}</a>
               {p.phone && <a href={`tel:${p.phone.replace(/[^\d+]/g, "")}`} className={linkClass}><PhoneIcon className={contactIcon} />{p.phone}</a>}
             </td>
-            <td>{p.location ?? "—"}</td>
-            <td className={p.neighborNet ? "" : "max-lg:hidden"}>{p.neighborNet ?? "—"}</td>
-            <td><StatusBadge status={p.status} /></td>
+            <td className="max-lg:col-span-2 max-lg:row-start-2 max-lg:mt-2 max-lg:text-muted">
+              {p.location ?? "—"}
+              {p.neighborNet && <span className="lg:hidden"> · {p.neighborNet}</span>}
+            </td>
+            <td className="max-lg:hidden">{p.neighborNet ?? "—"}</td>
+            <td className="max-lg:col-start-2 max-lg:row-start-1"><StatusBadge status={p.status} /></td>
           </tr>
         ))}
       </tbody>

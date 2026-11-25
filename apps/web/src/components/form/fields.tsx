@@ -48,7 +48,7 @@ type TextFieldProps = Omit<ComponentProps<"input">, "id"> & {
 
 export function TextField({ id, label, required, error, ...input }: TextFieldProps) {
   return (
-    <div>
+    <div className="min-w-0">
       <Label htmlFor={id} required={required}>{label}</Label>
       <input
         id={id}

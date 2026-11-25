@@ -8,12 +8,12 @@ type Props = { headingRef: RefObject<HTMLHeadingElement | null>; cycleYear: numb
 
 export function Completion({ headingRef, cycleYear, onRestart }: Props) {
   return (
-    <div className="flex min-h-[calc(100dvh-80px)] flex-col">
+    <div className="flex min-h-[calc(100dvh-64px)] sm:min-h-[calc(100dvh-80px)] flex-col">
       <Confetti />
-      <div className="px-4 pt-[25px] sm:px-6">
+      <div className="relative z-10 px-4 pt-3 sm:px-6 sm:pt-[25px]">
         <FormProgress current={5} />
       </div>
-      <main className="grid flex-1 place-items-center px-4 py-10">
+      <main className="grid flex-1 place-items-center overflow-x-clip px-4 py-10">
         <BlobCard labelledBy="thanks-heading">
           <div aria-hidden className="grid size-16 place-items-center rounded-full bg-mint-100 text-[36px] font-bold text-forest-600">
             ✓

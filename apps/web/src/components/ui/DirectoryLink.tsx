@@ -6,7 +6,7 @@ export function DirectoryLink() {
     <div className="flex flex-col items-center gap-1.5">
       <Link
         href="/directory"
-        className="group inline-flex h-11 items-center gap-2 rounded-lg border border-forest-600 bg-white px-4 text-[14px] sm:px-6 sm:text-[15px] font-semibold whitespace-nowrap text-forest-950 transition-colors hover:bg-mint-100"
+        className="group inline-flex h-11 items-center gap-2 rounded-lg border border-forest-600 bg-white px-4 text-[15px] sm:px-6 font-semibold whitespace-nowrap text-forest-950 transition-colors hover:bg-mint-100"
       >
         Go to Leadership Directory
         <ArrowRightIcon className="size-4 text-forest-600 transition-transform group-hover:translate-x-1 motion-reduce:transition-none" />

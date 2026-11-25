@@ -17,7 +17,7 @@ export default function LoginPage({ searchParams }: PageProps<"/login">) {
   return (
     <div className="flex min-h-dvh flex-col overflow-x-clip">
       <FormHeader />
-      <main className="grid flex-1 place-items-center px-4 py-10">
+      <main className="grid flex-1 place-items-center overflow-clip px-4 py-10">
         <BlobCard labelledBy="login-heading">
           <h1 id="login-heading" className="font-display text-[24px] leading-[1.4] text-forest-950 uppercase sm:text-[28px]">
             Leadership Directory

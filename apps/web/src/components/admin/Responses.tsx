@@ -71,16 +71,16 @@ export function Responses({ responses, profileCount, cycleYear }: Props) {
   return (
     <>
       <PageTitle aside={<DashboardGuide />} subtitle={`Manage ${cycleYear} leadership submissions and SRC notifications.`}>IT Dashboard</PageTitle>
-      <dl className="mt-6 grid gap-4 sm:grid-cols-3">
+      <dl className="mt-5 grid grid-cols-3 gap-2 sm:mt-6 sm:gap-4">
         {([["Leadership profiles", profileCount], [`${cycleYear} forms submitted`, `${submitted} / ${profileCount}`], ["Notification issues", issues]] as const).map(([label, n]) => (
-          <div key={label} className="rounded-xl border border-sage-300 bg-white p-4">
-            <dt className="text-[13px] text-muted">{label}</dt>
-            <dd className="mt-1 text-[24px] font-bold text-forest-950">{n}</dd>
+          <div key={label} className="flex flex-col justify-between rounded-xl border border-sage-300 bg-white p-3 sm:p-4">
+            <dt className="text-[12px] leading-snug text-muted sm:text-[13px]">{label}</dt>
+            <dd className="mt-1 text-[18px] font-bold sm:text-[24px] text-forest-950">{n}</dd>
           </div>
         ))}
       </dl>
 
-      <h2 className="mt-8 font-display text-[18px] text-forest-950 uppercase sm:text-[22px]">{cycleYear} Responses</h2>
+      <h2 className="mt-8 font-display text-[18px] leading-normal text-forest-950 uppercase sm:text-[22px]">{cycleYear} Responses</h2>
       <p className="text-[13px] text-muted">Accepted submissions update the directory automatically. SRCs receive an informational email.</p>
       <div className="mt-4 mb-4 flex flex-col gap-3 md:flex-row">
         <SearchBox aria-label="Search responses" placeholder="Search names, roles, regions…" value={search} onChange={(e) => setSearch(e.target.value)} />
@@ -90,22 +90,22 @@ export function Responses({ responses, profileCount, cycleYear }: Props) {
         </Toolbar>
       </div>
 
-      <div className="overflow-x-auto rounded-xl border border-sage-300 bg-white">
-        <table className="w-full min-w-[680px] text-left text-[13px]">
-          <thead className="bg-mint-50 text-forest-950">
+      <div className="md:overflow-x-auto md:rounded-xl md:border md:border-sage-300 md:bg-white">
+        <table className="w-full text-left text-[13px] max-md:block md:min-w-[680px]">
+          <thead className="bg-mint-50 text-forest-950 max-md:sr-only">
             <tr>{["Name", "Leadership role", "SR / Region", "Submitted", "SRC email"].map((h) => <th key={h} scope="col" className="px-4 py-4">{h}</th>)}</tr>
           </thead>
-          <tbody>
+          <tbody className="max-md:grid max-md:gap-3">
             {visible.map((r) => (
-              <tr key={r.id} className="relative border-t border-line hover:bg-mint-25">
-                <td className="px-4 py-3.5">
-                  <button type="button" onClick={() => setOpen(r)} className="text-left font-semibold text-forest-950 after:absolute after:inset-0">{r.name}</button>
-                  {r.possibleDuplicate && <span className="ml-2"><Badge tone="yellow">Possible duplicate</Badge></span>}
+              <tr key={r.id} className="relative border-t border-line hover:bg-mint-25 max-md:grid max-md:grid-cols-[1fr_auto] max-md:items-center max-md:gap-x-3 max-md:gap-y-2 max-md:rounded-2xl max-md:border max-md:border-sage-200 max-md:bg-white max-md:p-4 max-md:shadow-sm md:[&>td]:px-4 md:[&>td]:py-3.5">
+                <td className="max-md:col-start-1 max-md:row-start-1">
+                  <button type="button" onClick={() => setOpen(r)} className="text-left font-semibold text-forest-950 after:absolute after:inset-0 max-md:text-[16px]">{r.name}</button>
+                  {r.possibleDuplicate && <span className="md:ml-2 max-md:mt-1.5 max-md:block"><Badge tone="yellow">Possible duplicate</Badge></span>}
                 </td>
-                <td className="px-4 py-3.5">{roleNames(r)}</td>
-                <td className="px-4 py-3.5">{r.location ?? "—"}</td>
-                <td className="px-4 py-3.5 whitespace-nowrap">{date(r.submittedAt)}</td>
-                <td className="px-4 py-3.5"><Badge tone={EMAIL[r.emailStatus].tone}>{EMAIL[r.emailStatus].label}</Badge></td>
+                <td className="max-md:col-start-1 max-md:row-start-2">{roleNames(r)}</td>
+                <td className="max-md:col-start-1 max-md:row-start-3 max-md:text-muted">{r.location ?? "—"}</td>
+                <td className="whitespace-nowrap max-md:col-start-2 max-md:row-start-3 max-md:text-right max-md:text-muted">{date(r.submittedAt)}</td>
+                <td className="max-md:col-start-2 max-md:row-start-1 max-md:self-start max-md:text-right"><Badge tone={EMAIL[r.emailStatus].tone}>{EMAIL[r.emailStatus].label}</Badge></td>
               </tr>
             ))}
           </tbody>

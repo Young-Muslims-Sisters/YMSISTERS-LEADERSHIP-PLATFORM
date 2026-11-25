@@ -205,17 +205,17 @@ export function AnnualForm({ reference, cycleYear }: Props) {
   return (
     <>
       <FormHeader />
-      <div className="px-4 pt-[25px] sm:px-6">
+      <div className="px-4 pt-3 sm:px-6 sm:pt-[25px]">
         <FormProgress current={meta.section} />
       </div>
 
-      <main className="mx-auto w-full max-w-[940px] px-4 pt-10 pb-32 has-[[role=dialog]]:pb-96 has-[[role=listbox]]:pb-96 sm:px-0">
+      <main className="mx-auto w-full max-w-[940px] px-4 pt-7 pb-32 sm:pt-10 has-[[role=dialog]]:pb-96 has-[[role=listbox]]:pb-96 sm:px-0">
         <p className="text-[12px] font-semibold text-forest-600">SECTION {meta.section + 1} OF 5</p>
         <h1
           key={screen}
           ref={headingRef}
           tabIndex={-1}
-          className="screen-enter mt-0.5 mb-[30px] font-display text-[24px] leading-normal text-forest-950 uppercase outline-none sm:text-[30px]"
+          className="screen-enter mt-0.5 mb-5 font-display text-[21px] sm:mb-[30px] leading-normal text-forest-950 uppercase outline-none sm:text-[30px]"
         >
           {meta.title}
         </h1>
