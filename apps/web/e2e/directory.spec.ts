@@ -135,3 +135,39 @@ test("IT admin sees responses, private answers and email status", async ({ page 
   await page.getByRole("searchbox").fill("dalia");
   await expect(page.getByText("No route")).toBeVisible();
 });
+
+test("IT admin deletes a person only after confirming", async ({ page }) => {
+  // A throwaway fictional person, so the seed people stay.
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+  const headers = { apikey: key, Authorization: `Bearer ${key}`, "Content-Type": "application/json" };
+  const last = `${test.info().project.name}${Date.now()}`;
+  const email = `e2e-delete-${last}@example.test`;
+  const [region] = await (await fetch(`${url}/rest/v1/subregions?select=id,region_id&code=eq.NJC`, { headers })).json();
+  const created = await fetch(`${url}/rest/v1/rpc/submit_annual_form`, {
+    method: "POST",
+    headers,
+    body: JSON.stringify({
+      payload: {
+        cycle_year: 2027, first_name: "Delete", last_name: last, email, phone: "(555) 555-0123", state: "New Jersey",
+        region_id: region.region_id, subregion_id: region.id, involvement: "cloud",
+        current_positions: [], previous_positions: [], tags: [], answers: { birthday: "2003-05-01" },
+      },
+    }),
+  });
+  expect(created.ok, await created.text()).toBe(true);
+
+  await signIn(page, "Test IT admin", "/admin");
+  await page.getByRole("button", { name: "Got it" }).click();
+  await page.getByRole("searchbox").fill(last);
+  await page.getByRole("button", { name: `Delete ${last}` }).click();
+  await page.getByRole("button", { name: "Delete this person" }).click();
+  await shot(page, "26-delete");
+  await page.getByRole("button", { name: "Cancel" }).click();
+  await page.getByRole("button", { name: "Delete this person" }).click();
+  await page.getByRole("button", { name: "Delete permanently" }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expect(page.getByText("No responses match.")).toBeVisible();
+  const left = await (await fetch(`${url}/rest/v1/users?select=id&email=eq.${email}`, { headers })).json();
+  expect(left).toEqual([]);
+});

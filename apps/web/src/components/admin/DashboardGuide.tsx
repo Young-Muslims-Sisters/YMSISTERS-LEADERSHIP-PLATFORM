@@ -13,6 +13,7 @@ const GUIDE = [
   ["Open the full answers", "Select a name to see everything they submitted, including private answers like date of birth and ethnicity. Please keep these confidential."],
   ["Check SRC emails", "Queued is waiting to send, Sent was delivered to the email service, and Failed needs attention. No route means there is no SRC email for that subregion or region."],
   ["Spot possible duplicates", "A yellow label means someone with the same name already has a profile under another email. Profiles are never merged automatically."],
+  ["Delete a person", "Open a response and choose Delete this person at the bottom. It removes their profile and all their responses, and can’t be undone."],
 ] as const;
 
 // "?" button explaining the dashboard. Opens by itself the first time on each browser.

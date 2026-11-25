@@ -12,6 +12,7 @@ import { Pagination, usePaged } from "@/components/ui/Pagination";
 import { SortMenu } from "@/components/ui/SortMenu";
 import type { EmailStatus, Response } from "@/lib/admin/types";
 import { DashboardGuide } from "./DashboardGuide";
+import { DeletePerson } from "./DeletePerson";
 
 const EMAIL: Record<EmailStatus, { label: string; tone: Tone }> = {
   queued: { label: "Queued", tone: "yellow" },
@@ -150,6 +151,7 @@ function ResponseDrawer({ response: r, onClose }: { response: Response; onClose:
           ["Organizations", r.organizations.join(", ")], ["Anything else", r.anythingElse],
         ]} />
       </Section>
+      <DeletePerson userId={r.userId} name={r.name} onDeleted={onClose} />
     </Dialog>
   );
 }

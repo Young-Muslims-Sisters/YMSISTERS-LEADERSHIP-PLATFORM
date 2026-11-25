@@ -12,7 +12,7 @@ export function AppShell({ access, active, children }: { access: string; active:
     <div className="min-h-dvh bg-app">
       <header className="border-b-2 border-cream-line bg-cream">
         <div className="mx-auto flex min-h-16 max-w-[1240px] flex-wrap items-center justify-between gap-x-4 px-4 py-2 sm:px-7">
-          <Link href="/" aria-label="Young Muslims, start page" className="font-display text-[17px] text-forest-950">YOUNG MUSLIMS</Link>
+          <p className="font-display text-[17px] text-forest-950">YOUNG MUSLIMS</p>
           <div className="flex items-center gap-1 max-sm:-ml-2">
             <Link href="/" className={linkClass}>Form</Link>
             {access === "it_admin" &&
