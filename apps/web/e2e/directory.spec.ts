@@ -62,8 +62,8 @@ test("member searches, filters, opens a profile and exports", async ({ page }) =
   await page.getByRole("combobox", { name: /NeighborNet/ }).fill("Salisbury");
   await expect(page.getByRole("option", { name: "Salisbury" })).toBeVisible();
   await page.keyboard.press("Escape");
-  await page.getByRole("combobox", { name: /SR/ }).fill("NJC");
-  await page.getByRole("option", { name: "NJC" }).click();
+  await page.getByRole("combobox", { name: /SR/ }).fill("New Jersey Central");
+  await page.getByRole("option", { name: "New Jersey Central" }).click();
   await page.keyboard.press("Escape");
   await page.getByRole("combobox", { name: /NeighborNet/ }).click();
   await expect(page.getByRole("option")).toHaveCount(10);

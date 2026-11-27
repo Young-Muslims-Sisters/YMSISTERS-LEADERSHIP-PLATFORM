@@ -23,6 +23,7 @@ Replace the annual Google Form and spreadsheet with one platform for collecting 
 - IT dashboard access is limited to listed emails (currently the IT lead only).
 - People sign in again every 7 days, so a suspended mailbox loses access.
 - Domains and IT emails are rows in `private.allowed_domains` and `private.it_admins`; changing one is a single SQL statement.
+- YM email and mailing address (decided 2026-11-27) are visible only to IT and the National Shura. National Shura accounts are rows in `private.national_shura`; they get directory access plus these two fields, never raw submissions or the IT dashboard.
 - Invitations come later.
 
 **Email provider:** probably Google Workspace/Gmail for sending SRC notifications. Keep the provider-neutral adapter.

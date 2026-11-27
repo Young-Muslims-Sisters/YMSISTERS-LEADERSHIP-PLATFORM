@@ -19,10 +19,11 @@ insert into public.subregions (code, name) values
   ('FLORIDA', 'Florida'),
   ('GEORGIA', 'Georgia'),
   ('HOUSTON', 'Houston'),
-  ('NJN', 'NJN'),
-  ('NJC', 'NJC'),
-  ('NJS', 'NJS'),
-  ('NEW-YORK', 'New York'),
+  ('NJN', 'New Jersey North'),
+  ('NJC', 'New Jersey Central'),
+  ('NJS', 'New Jersey South'),
+  ('NY-EAST', 'New York East'),
+  ('NY-WEST', 'New York West'),
   ('VIRGINIA', 'Virginia'),
   ('LOUISIANA', 'Louisiana'),
   ('MARYLAND', 'Maryland'),
@@ -98,17 +99,17 @@ from (values
   ('NJS', 'NJS-571', '571'),
   ('NJS', 'NJS-CHERRY-HILL', 'Cherry Hill'),
   ('NJS', 'NJS-206', '206'),
-  ('NEW-YORK', 'NEW-YORK-NEW-HYDE-PARK', 'New Hyde Park'),
-  ('NEW-YORK', 'NEW-YORK-WESTBURY', 'Westbury'),
-  ('NEW-YORK', 'NEW-YORK-FLUSHING', 'Flushing'),
-  ('NEW-YORK', 'NEW-YORK-JAMAICA', 'Jamaica'),
-  ('NEW-YORK', 'NEW-YORK-ROSLYN', 'Roslyn'),
-  ('NEW-YORK', 'NEW-YORK-KENSINGTON', 'Kensington'),
-  ('NEW-YORK', 'NEW-YORK-WESTCHESTER', 'Westchester'),
-  ('NEW-YORK', 'NEW-YORK-EAST-MEADOW', 'East Meadow'),
-  ('NEW-YORK', 'NEW-YORK-DEER-PARK', 'Deer Park'),
-  ('NEW-YORK', 'NEW-YORK-MELVILLE', 'Melville'),
-  ('NEW-YORK', 'NEW-YORK-NYIT', 'NYIT'),
+  ('NY-EAST', 'NEW-YORK-NEW-HYDE-PARK', 'New Hyde Park'),
+  ('NY-EAST', 'NEW-YORK-WESTBURY', 'Westbury'),
+  ('NY-WEST', 'NEW-YORK-FLUSHING', 'Flushing'),
+  ('NY-WEST', 'NEW-YORK-JAMAICA', 'Jamaica'),
+  ('NY-EAST', 'NEW-YORK-ROSLYN', 'Roslyn'),
+  ('NY-WEST', 'NEW-YORK-KENSINGTON', 'Kensington'),
+  ('NY-WEST', 'NEW-YORK-WESTCHESTER', 'Westchester'),
+  ('NY-EAST', 'NEW-YORK-EAST-MEADOW', 'East Meadow'),
+  ('NY-EAST', 'NEW-YORK-DEER-PARK', 'Deer Park'),
+  ('NY-EAST', 'NEW-YORK-MELVILLE', 'Melville'),
+  ('NY-EAST', 'NEW-YORK-NYIT', 'NYIT'),
   ('VIRGINIA', 'VIRGINIA-ALEXANDRIA', 'Alexandria'),
   ('VIRGINIA', 'VIRGINIA-FAIRFAX', 'Fairfax'),
   ('VIRGINIA', 'VIRGINIA-SPRINGFIELD', 'Springfield'),
@@ -177,17 +178,18 @@ on conflict (code) do update
   set region_id = excluded.region_id, subregion_id = null, state = excluded.state, name = excluded.name;
 
 -- Positions and national teams ---------------------------------------------
-insert into public.role_types (id, code, name, scope_level, sort_order) values
-  ('40000000-0000-0000-0000-000000000001', 'NNC', 'NeighborNet Coordinator (NNC)', 'neighbor_net', 10),
-  (gen_random_uuid(), 'NN_SHURA', 'NeighborNet Shura', 'neighbor_net', 20),
-  ('40000000-0000-0000-0000-000000000002', 'SRC', 'Subregional Coordinator (SRC)', 'subregion', 30),
-  ('40000000-0000-0000-0000-000000000003', 'SR_SHURA', 'SubRegional Shura', 'subregion', 40),
-  (gen_random_uuid(), 'RL', 'Regional Lead (RL)', 'region', 45),
-  (gen_random_uuid(), 'NC', 'National Coordinator (NC)', 'national', 50),
-  (gen_random_uuid(), 'SG', 'Secretary General (SG)', 'national', 60),
-  (gen_random_uuid(), 'NS', 'National Shura (NS)', 'national', 70)
+insert into public.role_types (id, code, name, scope_level, sort_order, has_portfolio) values
+  ('40000000-0000-0000-0000-000000000001', 'NNC', 'NeighborNet Coordinator (NNC)', 'neighbor_net', 10, false),
+  (gen_random_uuid(), 'NN_SHURA', 'NeighborNet Shura', 'neighbor_net', 20, true),
+  ('40000000-0000-0000-0000-000000000002', 'SRC', 'Subregional Coordinator (SRC)', 'subregion', 30, false),
+  ('40000000-0000-0000-0000-000000000003', 'SR_SHURA', 'SubRegional Shura', 'subregion', 40, true),
+  (gen_random_uuid(), 'RL', 'Regional Lead (RL)', 'region', 45, false),
+  (gen_random_uuid(), 'NC', 'National Coordinator (NC)', 'national', 50, false),
+  (gen_random_uuid(), 'SG', 'Secretary General (SG)', 'national', 60, false),
+  (gen_random_uuid(), 'NS', 'National Shura (NS)', 'national', 70, true)
 on conflict (code) do update
-  set name = excluded.name, scope_level = excluded.scope_level, sort_order = excluded.sort_order;
+  set name = excluded.name, scope_level = excluded.scope_level, sort_order = excluded.sort_order,
+      has_portfolio = excluded.has_portfolio;
 
 insert into public.teams (id, code, name, scope) values
   (gen_random_uuid(), 'ALUMNI', 'Alumni', 'national'),
@@ -206,7 +208,7 @@ insert into public.teams (id, code, name, scope) values
   (gen_random_uuid(), 'SAFETY', 'Safety & Compliance', 'national'),
   (gen_random_uuid(), 'SI', 'Societal Impact', 'national'),
   (gen_random_uuid(), 'STUDY_CIRCLE', 'Study Circle', 'national'),
-  (gen_random_uuid(), 'TARBIYYA', 'Tarbiyya', 'national'),
+  (gen_random_uuid(), 'TARBIYYA', 'Tarbiyyah', 'national'),
   (gen_random_uuid(), 'TLP', 'The Lighthouse Press', 'national'),
   (gen_random_uuid(), 'YMLC', 'YMLC', 'national')
 on conflict (code) do update set name = excluded.name;
@@ -275,7 +277,7 @@ insert into public.profile_tags (id, kind, label) values
   (gen_random_uuid(), 'interest', 'Safety & Compliance'),
   (gen_random_uuid(), 'interest', 'Societal Impact'),
   (gen_random_uuid(), 'interest', 'Study Circle'),
-  ('61000000-0000-0000-0000-000000000001', 'interest', 'Tarbiyya'),
+  ('61000000-0000-0000-0000-000000000001', 'interest', 'Tarbiyyah'),
   (gen_random_uuid(), 'interest', 'The Lighthouse Press'),
   (gen_random_uuid(), 'interest', 'YMLC'),
   (gen_random_uuid(), 'field_of_study', 'Accounting'),

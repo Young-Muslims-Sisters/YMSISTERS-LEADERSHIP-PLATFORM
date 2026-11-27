@@ -17,7 +17,7 @@ export function AppShell({ access, active, children }: { access: string; active:
       <header className="border-b-2 border-cream-line bg-cream">
         <div className="mx-auto flex max-w-[1240px] flex-wrap items-center gap-x-6 px-4 max-sm:pt-2 sm:h-16 sm:px-7">
           <p className="mr-auto font-display text-[17px] leading-normal text-forest-950">YOUNG MUSLIMS</p>
-          <nav aria-label="Pages" className="flex h-full gap-5 max-sm:order-last max-sm:w-full max-sm:gap-4">
+          <nav aria-label="Main" className="flex h-full gap-5 max-sm:order-last max-sm:w-full max-sm:gap-4">
             {PAGES.filter((p) => p.href !== "/admin" || access === "it_admin").map((p) => (
               <Link
                 key={p.href}

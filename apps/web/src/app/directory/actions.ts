@@ -1,7 +1,7 @@
 "use server";
 
 import { z } from "zod";
-import { fullName } from "@/lib/directory/types";
+import { fullName, positionLabel } from "@/lib/directory/types";
 import { requireMember } from "@/lib/server/access";
 import { loadDirectory } from "@/lib/server/directory";
 
@@ -22,7 +22,7 @@ export async function exportCsv(ids: string[] | null): Promise<string> {
 
   const header = ["Name", "Roles", "Email", "Phone", "State", "SR / Region", "NeighborNet", "Status", "Skills", "YM Interests"];
   const rows = chosen.map((p) => [
-    fullName(p), p.current.map((c) => c.name).join("; "), p.email, p.phone, p.state, p.location, p.neighborNet, p.status,
+    fullName(p), p.current.map(positionLabel).join("; "), p.email, p.phone, p.state, p.location, p.neighborNet, p.status,
     p.tags.skill.join("; "), p.tags.interest.join("; "),
   ]);
   return [header, ...rows].map((r) => r.map(cell).join(",")).join("\r\n");

@@ -9,10 +9,10 @@ const subscribe = () => () => {};
 
 const GUIDE = [
   ["See who has submitted", "Every accepted form is listed, newest first. Submitting also updates the directory right away, so there is nothing to approve."],
-  ["Find a response", "Search by name, email, role or region. Use Filter and Sort to narrow the list."],
   ["Open the full answers", "Select a name to see everything they submitted, including private answers like date of birth and ethnicity. Please keep these confidential."],
   ["Check SRC emails", "Queued is waiting to send, Sent was delivered to the email service, and Failed needs attention. No route means there is no SRC email for that subregion or region."],
   ["Spot possible duplicates", "A yellow label means someone with the same name already has a profile under another email. Profiles are never merged automatically."],
+  ["Create YM emails", "Need a YM email counts people who said they don’t have one yet. Each one has a purple Needs YM email label."],
   ["Delete a person", "Open a response and choose Delete this person at the bottom. It removes their profile and all their responses, and can’t be undone."],
 ] as const;
 

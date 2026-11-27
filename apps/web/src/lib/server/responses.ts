@@ -1,11 +1,14 @@
 import "server-only";
 import type { EmailStatus, Response } from "@/lib/admin/types";
+import { YM_EMAIL_STATUS } from "@/lib/directory/types";
 import { ROLE_COLUMNS, toPosition, type RoleRow } from "./directory";
 import { env } from "./env";
 import { supabaseSession } from "./supabase-session";
 
 type Named = { name: string } | null;
 type Labels = { label: string }[];
+// Organizations were plain labels before 2026-11-27; now each has a role and details.
+type Orgs = ({ label: string } | { org: { label: string }; role?: string; details?: string })[];
 type Row = {
   id: string;
   user_id: string;
@@ -20,7 +23,9 @@ type Row = {
     anything_else?: string | null;
     submitted?: {
       firstName: string; lastName: string; email: string; phone: string; state: string;
-      skills: Labels; interests: Labels; schools: Labels; fieldsOfStudy: Labels; organizations: Labels;
+      skills: Labels; interests: Labels; schools: Labels; fieldsOfStudy: Labels; organizations: Orgs;
+      ymEmailStatus?: string | null; ymEmail?: string;
+      addressLine1?: string; addressLine2?: string; city?: string; addressState?: string; postalCode?: string;
       occupation: { label: string } | null;
     };
   };
@@ -36,6 +41,12 @@ const COLUMNS =
 
 const PAGE_SIZE = 1000;
 const labels = (list?: Labels) => (list ?? []).map((t) => t.label);
+const orgs = (list?: Orgs) =>
+  (list ?? []).map((o) => {
+    if ("label" in o) return o.label;
+    const head = o.role ? `${o.org.label} (${o.role})` : o.org.label;
+    return o.details ? `${head}: ${o.details}` : head;
+  });
 
 function toResponse(r: Row): Response {
   const { submitted: s } = r.answers;
@@ -67,7 +78,11 @@ function toResponse(r: Row): Response {
     schools: labels(s?.schools),
     fieldsOfStudy: labels(s?.fieldsOfStudy),
     occupation: s?.occupation?.label ?? null,
-    organizations: labels(s?.organizations),
+    organizations: orgs(s?.organizations),
+    needsYmEmail: s?.ymEmailStatus === "needs",
+    ymEmail: s?.ymEmail || (s?.ymEmailStatus ? YM_EMAIL_STATUS[s.ymEmailStatus] : null),
+    address: [[s?.addressLine1, s?.addressLine2].filter(Boolean).join(", "), [s?.city, [s?.addressState, s?.postalCode].filter(Boolean).join(" ")].filter(Boolean).join(", ")]
+      .filter(Boolean).join(", ") || null,
     anythingElse: r.answers.anything_else ?? null,
   };
 }

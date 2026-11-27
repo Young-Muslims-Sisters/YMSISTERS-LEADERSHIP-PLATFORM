@@ -4,18 +4,20 @@ import { useEffect, useRef, useState } from "react";
 import type { z } from "zod";
 import type { ReferenceData } from "@/lib/form/reference-types";
 import {
-  connectionsSchema, contactSchema, currentPositionsSchema, educationSchema, emptyForm, fieldErrors,
+  connectionsSchema, contactSchema, placeSchema, currentPositionsSchema, educationSchema, emptyForm, fieldErrors,
   involvementSchema, personalSchema, previousPositionsSchema, skillsSchema, type AnnualFormValues,
 } from "@/lib/form/schema";
 import { Completion } from "./Completion";
 import { FormFooter, PrimaryButton } from "./FormFooter";
 import { FormHeader } from "./FormHeader";
 import { FormProgress } from "./FormProgress";
+import { portfolioRoles } from "./PositionFields";
 import { ConnectionsScreen } from "./screens/ConnectionsScreen";
 import { ContactScreen } from "./screens/ContactScreen";
 import { CurrentScreen } from "./screens/CurrentScreen";
 import { EducationScreen } from "./screens/EducationScreen";
 import { InvolvementScreen } from "./screens/InvolvementScreen";
+import { LocationScreen } from "./screens/LocationScreen";
 import { PersonalScreen } from "./screens/PersonalScreen";
 import { PreviousScreen } from "./screens/PreviousScreen";
 import { ReviewScreen } from "./screens/ReviewScreen";
@@ -26,6 +28,7 @@ import { Welcome } from "./Welcome";
 const SCREEN_META: Record<Screen, { section: number; title: string }> = {
   personal: { section: 0, title: "Personal Information" },
   contact: { section: 1, title: "Contact Details" },
+  location: { section: 1, title: "Your Location" },
   involvement: { section: 2, title: "YM Involvement" },
   current: { section: 2, title: "Current Leadership" },
   previous: { section: 2, title: "Leadership History" },
@@ -38,7 +41,7 @@ const SCREEN_META: Record<Screen, { section: number; title: string }> = {
 // The Cloud path skips Current Leadership.
 function screensFor(involvement: AnnualFormValues["involvement"]): Screen[] {
   return [
-    "personal", "contact", "involvement",
+    "personal", "contact", "location", "involvement",
     ...(involvement === "cloud" ? [] : (["current"] as Screen[])),
     "previous", "skills", "education", "connections", "review",
   ];
@@ -48,7 +51,8 @@ function screensFor(involvement: AnnualFormValues["involvement"]): Screen[] {
 function screenForField(path: string): Screen {
   const root = path.split(".")[0];
   if (["firstName", "lastName", "birthday", "ethnicity"].includes(root)) return "personal";
-  if (["email", "phone", "state", "location", "neighborNetId"].includes(root)) return "contact";
+  if (["email", "phone", "ymEmailStatus", "ymEmail"].includes(root)) return "contact";
+  if (["state", "location", "neighborNetId", "addressLine1", "addressLine2", "city", "addressState", "postalCode"].includes(root)) return "location";
   if (root === "involvement") return "involvement";
   if (root === "currentPositions") return "current";
   if (["previousPositions", "noPreviousPositions"].includes(root)) return "previous";
@@ -155,14 +159,22 @@ export function AnnualForm({ reference, cycleYear }: Props) {
 
   const validate = (s: Screen): Record<string, string> => {
     const schemas: Partial<Record<Screen, z.ZodType>> = {
-      personal: personalSchema, contact: contactSchema, involvement: involvementSchema,
+      personal: personalSchema, contact: contactSchema, location: placeSchema, involvement: involvementSchema,
       current: currentPositionsSchema, skills: skillsSchema, education: educationSchema, connections: connectionsSchema,
       previous: values.noPreviousPositions ? undefined : previousPositionsSchema,
     };
     const schema = schemas[s];
     if (!schema) return {};
     const result = schema.safeParse(values);
-    return result.success ? {} : fieldErrors(result.error);
+    const errs = result.success ? {} : fieldErrors(result.error);
+    // Shura roles need a portfolio; which roles those are comes from the database.
+    if (s === "current") {
+      const shura = portfolioRoles(reference);
+      values.currentPositions.forEach((p, i) => {
+        if (p.position && shura.has(p.position) && !p.portfolio) errs[`currentPositions.${i}.portfolio`] ??= "Choose your portfolio";
+      });
+    }
+    return errs;
   };
 
   const showErrors = (errs: Record<string, string>) => {
@@ -221,7 +233,8 @@ export function AnnualForm({ reference, cycleYear }: Props) {
         </h1>
 
         {screen === "personal" && <PersonalScreen values={values} set={set} err={err} />}
-        {screen === "contact" && <ContactScreen values={values} set={set} err={err} reference={reference} />}
+        {screen === "contact" && <ContactScreen values={values} set={set} err={err} />}
+        {screen === "location" && <LocationScreen values={values} set={set} err={err} reference={reference} />}
         {screen === "involvement" && (
           <InvolvementScreen values={values} set={set} err={err} cycleYear={cycleYear} />
         )}

@@ -3,7 +3,7 @@ import type { AnnualFormValues } from "@/lib/form/schema";
 import type { ComboOption } from "../Combobox";
 
 export type Screen =
-  | "personal" | "contact" | "involvement" | "current" | "previous"
+  | "personal" | "contact" | "location" | "involvement" | "current" | "previous"
   | "skills" | "education" | "connections" | "review";
 
 export type ScreenProps = {

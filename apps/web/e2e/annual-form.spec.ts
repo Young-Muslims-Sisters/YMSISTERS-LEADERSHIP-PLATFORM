@@ -16,7 +16,7 @@ async function shot(page: Page, name: string) {
 }
 
 async function pick(page: Page, label: string | RegExp, text: string, option?: string | RegExp) {
-  const box = page.getByRole("combobox", { name: label });
+  const box = page.getByRole("combobox", { name: label }).last(); // the newest row when there are several
   await box.click();
   await box.fill(text);
   await page.getByRole("option", { name: option ?? text }).first().click();
@@ -67,13 +67,36 @@ test("active leader completes the form and lands in the directory", async ({ pag
   await expect(page.getByRole("heading", { name: "Contact Details" })).toBeVisible();
   await page.getByLabel(/Personal Email Address/).fill(email);
   await page.getByLabel(/Phone Number/).fill("(555) 555-0123");
-  await pick(page, /^State/, "Wash", "Washington");
+  // YM email is required, and must be a YM address.
+  await cont(page);
+  await expect(page.getByText("Choose one option")).toBeVisible();
+  await page.getByText("No, I need one").click();
+  await expect(page.getByText(/You need one to view the Leadership Directory/)).toBeVisible();
+  await page.getByText("Yes, I have one").click();
+  await page.getByLabel(/YM Email Address/).fill("walkthrough@gmail.com");
+  await cont(page);
+  await expect(page.getByText(/Enter your YM email/)).toBeVisible();
+  await page.getByLabel(/YM Email Address/).fill("walkthrough@ymsisters.com");
+  await shot(page, "02-contact");
+  await cont(page);
+
+  // 2b. Location
+  await expect(page.getByRole("heading", { name: "Your Location" })).toBeVisible();
+  await pick(page, /^State \(required/, "Wash", "Washington");
   await page.getByRole("combobox", { name: /NeighborNet/ }).click();
   await expect(page.getByText("Please select your SR / Region first")).toBeVisible();
   await expect(page.getByRole("combobox", { name: /Subregion \(SR\)/ })).toBeFocused();
-  await pick(page, /Subregion \(SR\)/, "NJC");
+  await pick(page, /Subregion \(SR\)/, "New Jersey Central");
   await pick(page, /NeighborNet/, "Edison");
-  await shot(page, "02-contact");
+  // The address is optional, but a ZIP code must look like one.
+  await page.getByLabel(/Street Address/).fill("1 Example Way");
+  await page.getByLabel(/ZIP Code/).fill("88");
+  await cont(page);
+  await expect(page.getByText("Enter a 5-digit ZIP code")).toBeVisible();
+  await page.getByLabel(/^City/).fill("Edison");
+  await pick(page, /^State$/, "New J", "New Jersey");
+  await page.getByLabel(/ZIP Code/).fill("08817");
+  await shot(page, "02b-location");
   await cont(page);
 
   // 3. Involvement
@@ -95,6 +118,17 @@ test("active leader completes the form and lands in the directory", async ({ pag
   // 3a. Current positions
   await expect(page.getByRole("heading", { name: "Current Leadership" })).toBeVisible();
   await pick(page, /Position \/ Team/, "Subregional", /Subregional Coordinator/);
+  // A shura role needs a portfolio; a team needs the position on it.
+  await page.getByRole("button", { name: "+ Add Another Position" }).click();
+  await pick(page, /Position \/ Team/, "SubRegional Shura", /SubRegional Shura/);
+  await page.getByRole("button", { name: "+ Add Another Position" }).click();
+  await pick(page, /Position \/ Team/, "Conferences", /Conferences \(YMC\)/);
+  await cont(page);
+  await expect(page.getByText("Choose your portfolio")).toBeVisible();
+  await expect(page.getByText("Choose your position on the team")).toBeVisible();
+  await pick(page, /^Portfolio/, "Tarbiyyah", "Tarbiyyah");
+  await pick(page, /Your position on the team/, "Lead", "Lead");
+  await page.getByLabel(/What do you lead/).fill("Logistics");
   await shot(page, "04-current");
   await cont(page);
 
@@ -103,6 +137,7 @@ test("active leader completes the form and lands in the directory", async ({ pag
   await pick(page, /^Position$/, "NeighborNet Coordinator", /NeighborNet Coordinator/);
   await pickYear(page, "From Year", "2023");
   await pickYear(page, "To Year", "2025");
+  await page.getByLabel(/What did you do in this role/).fill("Started a monthly halaqa.");
   await shot(page, "05-previous");
   await cont(page);
 
@@ -124,14 +159,18 @@ test("active leader completes the form and lands in the directory", async ({ pag
   await cont(page);
 
   // 5b. Connections
-  await pick(page, "Organizations", "MSA", "MSA");
+  await pick(page, "Organization", "MSA", "MSA");
+  await page.getByLabel("Your role").fill("President");
+  await page.getByLabel(/How were you involved/).fill("Ran weekly halaqas.");
   await page.getByLabel(/Anything else/).fill("Fictional end-to-end test entry.");
   await shot(page, "08-connections");
   await cont(page);
 
   // Review
   await expect(page.getByRole("heading", { name: "Review Your Information", exact: true })).toBeVisible();
-  await expect(page.getByText(/Subregional Coordinator/)).toBeVisible();
+  await expect(page.getByText(/SubRegional Shura · Tarbiyyah/)).toBeVisible();
+  await expect(page.getByText(/Conferences \(YMC\) · Logistics Lead/)).toBeVisible();
+  await expect(page.getByText(/MSA \(President\)/)).toBeVisible();
   await shot(page, "09-review");
 
   // Editing from review returns straight to review.
@@ -158,7 +197,15 @@ test("active leader completes the form and lands in the directory", async ({ pag
   const roles = await db<{ is_current: boolean; from_year: number | null }[]>(
     `role_assignments?user_id=eq.${users[0].id}&select=is_current,from_year`,
   );
-  expect(roles.filter((r) => r.is_current)).toHaveLength(1);
+  expect(roles.filter((r) => r.is_current)).toHaveLength(3);
+  const team = await db<{ team_title: string; title_detail: string }[]>(
+    `role_assignments?user_id=eq.${users[0].id}&team_id=not.is.null&select=team_title,title_detail`,
+  );
+  expect(team).toEqual([{ team_title: "lead", title_detail: "Logistics" }]);
+  const details = await db<{ ym_email: string; postal_code: string }[]>(
+    `user_private_details?user_id=eq.${users[0].id}&select=ym_email,postal_code`,
+  );
+  expect(details).toEqual([{ ym_email: "walkthrough@ymsisters.com", postal_code: "08817" }]);
   expect(roles.find((r) => !r.is_current)?.from_year).toBe(2023);
   const deliveries = await db<{ status: string; recipient_email: string }[]>(
     `notification_deliveries?submission_id=eq.${subs[0].id}&select=status,recipient_email`,
@@ -179,8 +226,10 @@ test("Cloud path skips current positions", async ({ page }) => {
   await cont(page);
   await page.getByLabel(/Personal Email Address/).fill(email);
   await page.getByLabel(/Phone Number/).fill("5555550199");
-  await pick(page, /^State/, "Tex", "Texas");
-  await pick(page, /Subregion \(SR\)/, "West");
+  await page.getByText("No, I need one").click();
+  await cont(page);
+  await pick(page, /^State \(required/, "Tex", "Texas");
+  await pick(page, /Subregion \(SR\)/, "West", /^West$/);
   await pick(page, /NeighborNet/, "Bothell");
   await cont(page);
   await page.getByText("Interested in Cloud", { exact: true }).click();
@@ -216,8 +265,10 @@ test("an existing profile cannot be changed without the matching date of birth",
     await cont(page);
     await page.getByLabel(/Personal Email Address/).fill(email);
     await page.getByLabel(/Phone Number/).fill(phone);
-    await pick(page, /^State/, "Tex", "Texas");
-    await pick(page, /Subregion \(SR\)/, "West");
+    await page.getByText("No, I need one").click();
+    await cont(page);
+    await pick(page, /^State \(required/, "Tex", "Texas");
+    await pick(page, /Subregion \(SR\)/, "West", /^West$/);
     await cont(page);
     await page.getByText("Interested in Cloud", { exact: true }).click();
     await cont(page);

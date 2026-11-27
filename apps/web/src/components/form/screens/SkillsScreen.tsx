@@ -14,7 +14,7 @@ export function SkillsScreen({ values, set, reference }: Omit<ScreenProps, "err"
       <div className="mt-6">
         <Label id="interests-label" htmlFor="interests">YM Interests</Label>
         <TagPicker id="interests" labelledBy="interests-label" options={reference.tags.interest} value={values.interests}
-          onChange={(v) => set("interests", v)} placeholder="Select the areas you’re interested in, or add your own" />
+          onChange={(v) => set("interests", v)} placeholder="Pick what interests you, or add something you’d love to see or start" />
       </div>
     </Card>
   );

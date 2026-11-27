@@ -1,72 +1,60 @@
-import { useMemo, useState } from "react";
-import { US_STATES } from "@/lib/form/options";
-import type { ReferenceData } from "@/lib/form/reference-types";
-import { Combobox, type ComboOption } from "../Combobox";
-import { Card, FieldError, Label, TextField } from "../fields";
-import { describe, locationOptions, type ScreenProps } from "./shared";
+import { YM_EMAIL_DOMAIN } from "@/lib/form/schema";
+import { Card, FieldError, TextField } from "../fields";
+import { describe, type ScreenProps } from "./shared";
 
-export function ContactScreen({ values, set, err, reference }: ScreenProps & { reference: ReferenceData }) {
-  const locOptions = useMemo(() => locationOptions(reference), [reference]);
-  const selectedLoc = values.location ? locOptions.find((o) => o.value === `${values.location!.kind}:${values.location!.id}`) ?? null : null;
+const YM_CHOICES = [
+  { value: "has" as const, label: "Yes, I have one" },
+  { value: "needs" as const, label: "No, I need one" },
+];
 
-  // Shown when someone opens NeighborNet before choosing an SR / Region.
-  const [needsLocation, setNeedsLocation] = useState(false);
-  const locationError = err("location") ?? (needsLocation && !values.location ? "Please select your SR / Region first" : undefined);
-
-  const parentId = values.location?.id;
-  const nnOptions = useMemo<ComboOption[]>(
-    () =>
-      reference.neighborNets
-        .filter((n) => n.parentId === parentId)
-        .map((n) => ({ value: n.id, label: n.label, group: n.state ?? undefined })),
-    [parentId, reference],
-  );
-  const selectedNn = nnOptions.find((o) => o.value === values.neighborNetId) ?? null;
-  const stateOptions = useMemo(() => US_STATES.map((s) => ({ value: s, label: s })), []);
-
+export function ContactScreen({ values, set, err }: ScreenProps) {
   return (
-    <Card>
-      <div className="grid gap-x-[49px] gap-y-6 sm:grid-cols-2">
-        <TextField id="email" label="Personal Email Address" required type="email" autoComplete="email"
-          placeholder="name@example.com" value={values.email} onChange={(e) => set("email", e.target.value)}
-          error={err("email")} />
-        <TextField id="phone" label="Phone Number" required type="tel" autoComplete="tel" placeholder="(555) 555-0123"
-          value={values.phone} onChange={(e) => set("phone", e.target.value)} error={err("phone")} />
-        <div>
-          <Label id="state-label" htmlFor="state" required>State</Label>
-          <Combobox id="state" labelledBy="state-label" options={stateOptions}
-            selected={stateOptions.find((o) => o.value === values.state) ?? null}
-            onSelect={(o) => set("state", o?.value ?? "")} placeholder="Select state"
-            invalid={!!err("state")} describedBy={describe("state", err("state"))} />
-          <FieldError id="state-error" message={err("state")} />
+    <div className="grid gap-5">
+      <Card>
+        <div className="grid gap-x-[49px] gap-y-6 sm:grid-cols-2">
+          <TextField id="email" label="Personal Email Address" required type="email" autoComplete="email"
+            placeholder="name@example.com" value={values.email} onChange={(e) => set("email", e.target.value)}
+            error={err("email")} />
+          <TextField id="phone" label="Phone Number" required type="tel" autoComplete="tel" placeholder="(555) 555-0123"
+            value={values.phone} onChange={(e) => set("phone", e.target.value)} error={err("phone")} />
         </div>
-        <div>
-          <Label id="location-label" htmlFor="location" required>Subregion (SR) / Region (R)</Label>
-          <Combobox id="location" labelledBy="location-label" options={locOptions} selected={selectedLoc}
-            onSelect={(o) => {
-              const [kind, id] = (o?.value ?? "").split(":");
-              const location = o ? { kind: kind as "region" | "subregion", id } : null;
-              set("location", location);
-              set("neighborNetId", null);
-            }}
-            placeholder="Select SR / Region" invalid={!!locationError}
-            describedBy={describe("location", locationError)} />
-          <FieldError id="location-error" message={locationError} />
-        </div>
-        <div>
-          <Label id="neighborNetId-label" htmlFor="neighborNetId">NeighborNet (NN)</Label>
-          <Combobox id="neighborNetId" labelledBy="neighborNetId-label" options={nnOptions} selected={selectedNn}
-            onSelect={(o) => set("neighborNetId", o?.value ?? null)} placeholder={values.location ? "Select NeighborNet" : "Select your SR / Region first"}
-            onBlocked={
-              values.location
-                ? undefined
-                : () => {
-                    setNeedsLocation(true);
-                    document.getElementById("location")?.focus();
-                  }
-            } />
-        </div>
-      </div>
-    </Card>
+      </Card>
+
+      <Card>
+        <fieldset aria-describedby={describe("ymEmailStatus", err("ymEmailStatus"))}>
+          <legend className="text-[16px] font-bold text-forest-950">
+            Do you have a YM email (@{YM_EMAIL_DOMAIN})? <span aria-hidden className="text-danger">*</span>
+          </legend>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {YM_CHOICES.map((c, i) => (
+              <label key={c.value} className={`flex cursor-pointer items-center gap-2 rounded-lg border-[1.5px] px-3 py-2.5 text-[14px] ${
+                values.ymEmailStatus === c.value ? "border-forest-600 bg-mint-25 font-semibold text-forest-950" : "border-sage-300 bg-white text-ink"
+              }`}>
+                <input id={i === 0 ? "ymEmailStatus" : undefined} type="radio" name="ymEmailStatus" value={c.value}
+                  checked={values.ymEmailStatus === c.value} className="size-4 accent-forest-600"
+                  onChange={() => {
+                    set("ymEmailStatus", c.value);
+                    if (c.value !== "has") set("ymEmail", "");
+                  }} />
+                {c.label}
+              </label>
+            ))}
+          </div>
+          <FieldError id="ymEmailStatus-error" message={err("ymEmailStatus")} />
+        </fieldset>
+        {values.ymEmailStatus === "has" && (
+          <div className="mt-4 sm:max-w-[420px]">
+            <TextField id="ymEmail" label="YM Email Address" required type="email" autoComplete="off"
+              placeholder={`name@${YM_EMAIL_DOMAIN}`} value={values.ymEmail} onChange={(e) => set("ymEmail", e.target.value)}
+              error={err("ymEmail")} />
+          </div>
+        )}
+        {values.ymEmailStatus === "needs" && (
+          <p role="status" className="mt-4 rounded-lg bg-sand/60 px-4 py-3 text-[13px] text-forest-950">
+            You need one to view the Leadership Directory. We’ll let IT know to set one up for you.
+          </p>
+        )}
+      </Card>
+    </div>
   );
 }

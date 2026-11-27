@@ -18,11 +18,18 @@ export async function buildSubmissionPayload(form: ParsedAnnualForm, cycleYear: 
   if (error) throw error;
   const scopeOf = new Map(roles.map((r) => [r.id as string, r.scope_level as ScopeLevel]));
 
-  const toPosition = (ref: string) => {
+  type Details = { portfolio: { id?: string; label: string } | null; teamTitle: string | null; titleDetail: string };
+  const toPosition = (ref: string, d: Details) => {
     const [kind, id] = ref.split(":");
-    if (kind === "team") return { team_id: id };
+    if (kind === "team") {
+      const detail = d.teamTitle === "lead" || d.teamTitle === "other" ? d.titleDetail : "";
+      return { team_id: id, team_title: d.teamTitle, title_detail: detail || null };
+    }
     const scope = scopeOf.get(id);
     return {
+      // A portfolio from the department list, or typed in.
+      portfolio_team_id: d.portfolio?.id ?? null,
+      title_detail: d.portfolio && !d.portfolio.id ? d.portfolio.label : null,
       role_type_id: id,
       region_id: scope === "region" ? regionId : null,
       subregion_id: scope === "subregion" ? subregionId : null,
@@ -32,13 +39,13 @@ export async function buildSubmissionPayload(form: ParsedAnnualForm, cycleYear: 
 
   const isActive = form.involvement === "active_leadership";
   const current = isActive
-    ? form.currentPositions.flatMap((p) => (p.position ? [toPosition(p.position)] : []))
+    ? form.currentPositions.flatMap((p) => (p.position ? [toPosition(p.position, p)] : []))
     : [];
   const previous = form.noPreviousPositions
     ? []
     : form.previousPositions.flatMap((p) =>
         p.position
-          ? [{ ...toPosition(p.position), from_year: p.fromYear || null, to_year: p.toYear || null }]
+          ? [{ ...toPosition(p.position, p), description: p.description || null, from_year: p.fromYear || null, to_year: p.toYear || null }]
           : [],
       );
 
@@ -49,7 +56,7 @@ export async function buildSubmissionPayload(form: ParsedAnnualForm, cycleYear: 
     ...form.schools.map(tag("school")),
     ...form.fieldsOfStudy.map(tag("field_of_study")),
     ...(form.occupation ? [tag("occupation")(form.occupation)] : []),
-    ...form.organizations.map(tag("organization")),
+    ...form.organizations.map((o) => ({ ...tag("organization")(o.org), role: o.role || null, details: o.details || null })),
   ];
 
   return {
@@ -66,6 +73,13 @@ export async function buildSubmissionPayload(form: ParsedAnnualForm, cycleYear: 
     current_positions: current,
     previous_positions: previous,
     tags,
+    // YM email and mailing address: IT and National Shura only.
+    private: {
+      ym_email_status: form.ymEmailStatus,
+      ym_email: form.ymEmailStatus === "has" ? form.ymEmail : null,
+      address_line1: form.addressLine1, address_line2: form.addressLine2, city: form.city,
+      state: form.addressState, postal_code: form.postalCode,
+    },
     // Full answers, including sensitive ones, are kept IT-only on the submission.
     answers: {
       form_version: "2027-final-option-a",

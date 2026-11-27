@@ -30,5 +30,9 @@ export type Response = {
   fieldsOfStudy: string[];
   occupation: string | null;
   organizations: string[];
+  ymEmail: string | null;
+  // Said they need a YM email created.
+  needsYmEmail: boolean;
+  address: string | null;
   anythingElse: string | null;
 };

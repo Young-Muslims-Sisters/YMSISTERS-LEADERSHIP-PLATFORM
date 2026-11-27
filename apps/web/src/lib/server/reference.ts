@@ -9,7 +9,7 @@ export async function loadReferenceData(): Promise<ReferenceData> {
     db.from("regions").select("id, name").order("name"),
     db.from("subregions").select("id, name").order("name"),
     db.from("neighbor_nets").select("id, name, subregion_id, region_id, state").order("state").order("name"),
-    db.from("role_types").select("id, name, scope_level").eq("is_active", true).order("sort_order").order("name"),
+    db.from("role_types").select("id, name, scope_level, has_portfolio").eq("is_active", true).order("sort_order").order("name"),
     db.from("teams").select("id, name").eq("is_active", true).order("name"),
     db.from("profile_tags").select("id, kind, label").neq("kind", "school").eq("is_active", true).eq("is_approved", true).order("label"),
   ]);
@@ -24,7 +24,7 @@ export async function loadReferenceData(): Promise<ReferenceData> {
     regions: regions.data!.map((r) => ({ id: r.id, label: r.name })),
     subregions: subregions.data!.map((s) => ({ id: s.id, label: s.name })),
     neighborNets: neighborNets.data!.map((n) => ({ id: n.id, label: n.name, parentId: n.subregion_id ?? n.region_id, state: n.state })),
-    roleTypes: roleTypes.data!.map((r) => ({ id: r.id, label: r.name, scopeLevel: r.scope_level })),
+    roleTypes: roleTypes.data!.map((r) => ({ id: r.id, label: r.name, scopeLevel: r.scope_level, hasPortfolio: r.has_portfolio })),
     teams: teams.data!.map((t) => ({ id: t.id, label: t.name })),
     tags: byKind,
   };

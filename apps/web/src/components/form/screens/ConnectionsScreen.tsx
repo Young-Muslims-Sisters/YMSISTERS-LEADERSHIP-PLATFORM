@@ -1,21 +1,21 @@
 import type { ReferenceData } from "@/lib/form/reference-types";
 import { Card, CardTitle, FieldError, Label, inputClass } from "../fields";
-import { RepeatableTagField } from "../RepeatableTagField";
+import { OrganizationsField } from "../OrganizationsField";
 import type { ScreenProps } from "./shared";
 
 export function ConnectionsScreen({ values, set, err, reference }: ScreenProps & { reference: ReferenceData }) {
   return (
     <Card>
       <CardTitle>Other Organizations / Community Groups</CardTitle>
+      <p className="mt-1 text-[13px] text-muted">Add any you’ve been part of, with your role and what you worked on.</p>
       <div className="mt-4">
-        <RepeatableTagField id="organizations" label="Organizations" options={reference.tags.organization}
-          value={values.organizations} onChange={(v) => set("organizations", v)}
-          placeholder="Search organizations or add your own" addLabel="+ Add Organization" />
+        <OrganizationsField options={reference.tags.organization} value={values.organizations}
+          onChange={(v) => set("organizations", v)} />
       </div>
       <div className="mt-7">
         <Label htmlFor="anythingElse">Anything else you’d like to share?</Label>
         <p id="anythingElse-hint" className="-mt-1 mb-2 text-[13px] text-muted">
-          We’d love to get to know you! Tell us what you’re passionate about, any ideas you have for YM, or how you’re involved in other organizations.
+          Your passions, ideas for YM, or anything else on your mind.
         </p>
         <textarea id="anythingElse" rows={4} maxLength={2000} value={values.anythingElse}
           onChange={(e) => set("anythingElse", e.target.value)}

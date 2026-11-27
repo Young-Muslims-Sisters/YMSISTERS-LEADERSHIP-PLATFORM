@@ -11,6 +11,7 @@ import { FilterDialog } from "@/components/ui/FilterDialog";
 import { Pagination, usePaged } from "@/components/ui/Pagination";
 import { SortMenu } from "@/components/ui/SortMenu";
 import type { EmailStatus, Response } from "@/lib/admin/types";
+import { positionLabel } from "@/lib/directory/types";
 import { DashboardGuide } from "./DashboardGuide";
 import { DeletePerson } from "./DeletePerson";
 
@@ -26,14 +27,18 @@ const FIELDS = [
   { key: "email", label: "SRC email" },
   { key: "location", label: "SR / Region" },
   { key: "involvement", label: "Involvement" },
+  { key: "ymEmail", label: "YM email" },
 ] as const;
 type Key = (typeof FIELDS)[number]["key"];
-const NO_FILTERS: Record<Key, string[]> = { email: [], location: [], involvement: [] };
+const NO_FILTERS: Record<Key, string[]> = { email: [], location: [], involvement: [], ymEmail: [] };
 
 const SORTS = { newest: "Newest first", oldest: "Oldest first", name: "Name (A to Z)" } as const;
 
 const value = (r: Response, key: Key) =>
-  key === "email" ? EMAIL[r.emailStatus].label : key === "location" ? (r.location ?? "None") : r.involvement;
+  key === "email" ? EMAIL[r.emailStatus].label
+    : key === "location" ? (r.location ?? "None")
+      : key === "ymEmail" ? (r.needsYmEmail ? "Needs one" : "Has one or not asked")
+        : r.involvement;
 const roleNames = (r: Response) => r.current.map((c) => c.short).join(", ") || r.involvement;
 const date = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 
@@ -66,14 +71,20 @@ export function Responses({ responses, profileCount, cycleYear }: Props) {
   const { visible, pagination } = usePaged(results, JSON.stringify([search, filters, sort]));
   const submitted = new Set(responses.map((r) => r.userId)).size;
   const issues = responses.filter((r) => r.emailStatus === "failed" || r.emailStatus === "no_route").length;
+  // Latest response per person, so someone who later got an email is not counted.
+  const latest = new Map<string, Response>();
+  for (const r of responses) if (!latest.has(r.userId)) latest.set(r.userId, r);
+  const needYmEmail = [...latest.values()].filter((r) => r.needsYmEmail).length;
   const filterCount = FIELDS.filter(({ key }) => filters[key].length > 0).length;
 
   return (
     <>
       <PageTitle aside={<DashboardGuide />} subtitle={`Manage ${cycleYear} leadership submissions and SRC notifications.`}>IT Dashboard</PageTitle>
-      <dl className="mt-5 grid grid-cols-3 gap-2 sm:mt-6 sm:gap-4">
-        {([["Leadership profiles", profileCount], [`${cycleYear} forms submitted`, `${submitted} / ${profileCount}`], ["Notification issues", issues]] as const).map(([label, n]) => (
-          <div key={label} className="flex flex-col justify-between rounded-xl border border-sage-300 bg-white p-3 sm:p-4">
+      <dl className="mt-5 grid grid-cols-2 gap-2 sm:mt-6 sm:gap-4 lg:grid-cols-4">
+        {([["Leadership profiles", profileCount], [`${cycleYear} forms submitted`, `${submitted} / ${profileCount}`], ["Notification issues", issues], ["Need a YM email", needYmEmail]] as const).map(([label, n]) => (
+          <div key={label} className={`flex flex-col justify-between rounded-xl border p-3 sm:p-4 ${
+            label === "Need a YM email" && n ? "border-[#c9b6e8] bg-[#f4effb]" : "border-sage-300 bg-white"
+          }`}>
             <dt className="text-[12px] leading-snug text-muted sm:text-[13px]">{label}</dt>
             <dd className="mt-1 text-[18px] font-bold sm:text-[24px] text-forest-950">{n}</dd>
           </div>
@@ -91,21 +102,26 @@ export function Responses({ responses, profileCount, cycleYear }: Props) {
       </div>
 
       <div className="md:overflow-x-auto md:rounded-xl md:border md:border-sage-300 md:bg-white">
-        <table className="w-full text-left text-[13px] max-md:block md:min-w-[680px]">
+        <table className="w-full text-left text-[13px] max-md:block md:min-w-[800px]">
           <thead className="bg-mint-50 text-forest-950 max-md:sr-only">
-            <tr>{["Name", "Leadership role", "SR / Region", "Submitted", "SRC email"].map((h) => <th key={h} scope="col" className="px-4 py-4">{h}</th>)}</tr>
+            <tr>{["Name", "Leadership role", "SR / Region", "Submitted", "SRC email", "Flags"].map((h) => <th key={h} scope="col" className="px-4 py-4">{h}</th>)}</tr>
           </thead>
           <tbody className="max-md:grid max-md:gap-3">
             {visible.map((r) => (
               <tr key={r.id} className="relative border-t border-line hover:bg-mint-25 max-md:grid max-md:grid-cols-[1fr_auto] max-md:items-center max-md:gap-x-3 max-md:gap-y-2 max-md:rounded-2xl max-md:border max-md:border-sage-200 max-md:bg-white max-md:p-4 max-md:shadow-sm md:[&>td]:px-4 md:[&>td]:py-3.5">
                 <td className="max-md:col-start-1 max-md:row-start-1">
                   <button type="button" onClick={() => setOpen(r)} className="text-left font-semibold text-forest-950 after:absolute after:inset-0 max-md:text-[16px]">{r.name}</button>
-                  {r.possibleDuplicate && <span className="md:ml-2 max-md:mt-1.5 max-md:block"><Badge tone="yellow">Possible duplicate</Badge></span>}
                 </td>
                 <td className="max-md:col-start-1 max-md:row-start-2">{roleNames(r)}</td>
                 <td className="max-md:col-start-1 max-md:row-start-3 max-md:text-muted">{r.location ?? "—"}</td>
                 <td className="whitespace-nowrap max-md:col-start-2 max-md:row-start-3 max-md:text-right max-md:text-muted">{date(r.submittedAt)}</td>
                 <td className="max-md:col-start-2 max-md:row-start-1 max-md:self-start max-md:text-right"><Badge tone={EMAIL[r.emailStatus].tone}>{EMAIL[r.emailStatus].label}</Badge></td>
+                <td className={`max-md:col-span-2 max-md:row-start-4 ${r.possibleDuplicate || r.needsYmEmail ? "" : "max-md:hidden"}`}>
+                  <span className="flex flex-wrap gap-1.5">
+                    {r.needsYmEmail && <Badge tone="purple">Needs YM email</Badge>}
+                    {r.possibleDuplicate && <Badge tone="yellow">Possible duplicate</Badge>}
+                  </span>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -127,7 +143,7 @@ export function Responses({ responses, profileCount, cycleYear }: Props) {
 }
 
 function ResponseDrawer({ response: r, onClose }: { response: Response; onClose: () => void }) {
-  const positions = (list: Response["current"]) => list.map((p) => [p.name, years(p)].filter(Boolean).join(", ")).join("\n");
+  const positions = (list: Response["current"]) => list.map((p) => [[positionLabel(p), years(p)].filter(Boolean).join(", "), p.description].filter(Boolean).join(": ")).join("\n");
   return (
     <Dialog title={r.name} variant="drawer" onClose={onClose}>
       <p className="text-[13px] text-muted">Submitted {date(r.submittedAt)}{r.revision > 1 && ` (update ${r.revision})`}. Contains private answers.</p>
@@ -139,7 +155,7 @@ function ResponseDrawer({ response: r, onClose }: { response: Response; onClose:
         <div className="mt-3"><Facts rows={[["Recipient", r.emailRecipient], ["Last error", r.emailError]]} /></div>
       </Section>
       <Section title="Personal & contact">
-        <Facts rows={[["Email", r.email], ["Phone", r.phone], ["Date of birth", r.birthday], ["Ethnicity", r.ethnicity.join(", ")], ["State", r.state], ["SR / Region", r.location], ["NeighborNet", r.neighborNet]]} />
+        <Facts rows={[["Email", r.email], ["YM email", r.ymEmail], ["Phone", r.phone], ["Mailing address", r.address], ["Date of birth", r.birthday], ["Ethnicity", r.ethnicity.join(", ")], ["State", r.state], ["SR / Region", r.location], ["NeighborNet", r.neighborNet]]} />
       </Section>
       <Section title="YM involvement">
         <Facts rows={[["Involvement", r.involvement], ["Current", positions(r.current)], ["Previous", positions(r.previous)]]} />
@@ -148,7 +164,7 @@ function ResponseDrawer({ response: r, onClose }: { response: Response; onClose:
         <Facts rows={[
           ["Skills", r.skills.join(", ")], ["YM interests", r.interests.join(", ")], ["Status", r.educationStatus.join(", ")],
           ["Schools", r.schools.join(", ")], ["Fields of study", r.fieldsOfStudy.join(", ")], ["Occupation", r.occupation],
-          ["Organizations", r.organizations.join(", ")], ["Anything else", r.anythingElse],
+          ["Organizations", r.organizations.join("\n")], ["Anything else", r.anythingElse],
         ]} />
       </Section>
       <DeletePerson userId={r.userId} name={r.name} onDeleted={onClose} />

@@ -43,8 +43,10 @@ test("the glossary returns to the form with answers kept", async ({ page }) => {
   await fillPersonal(page);
   await page.getByLabel(/Personal Email/).fill("nav@example.test");
   await page.getByLabel(/Phone/).fill("(555) 555-0123");
-  await pick(page, /^State/, "Washington");
-  await pick(page, /Subregion/, "NJC");
+  await page.getByText("No, I need one").click();
+  await cont(page);
+  await pick(page, /^State \(required/, "Washington");
+  await pick(page, /Subregion/, "New Jersey Central");
   await cont(page);
   await heading(page, "YM Involvement");
   await page.getByRole("button", { name: "What is Cloud?" }).click();
@@ -75,8 +77,10 @@ test("the thank-you screen leads back to an empty start", async ({ page }) => {
   await fillPersonal(page);
   await page.getByLabel(/Personal Email/).fill(`e2e-nav-${test.info().project.name}-${Date.now()}@example.test`);
   await page.getByLabel(/Phone/).fill("(555) 555-0123");
-  await pick(page, /^State/, "Washington");
-  await pick(page, /Subregion/, "NJC");
+  await page.getByText("No, I need one").click();
+  await cont(page);
+  await pick(page, /^State \(required/, "Washington");
+  await pick(page, /Subregion/, "New Jersey Central");
   await cont(page);
   await page.getByText("Interested in Cloud", { exact: true }).click();
   await cont(page);

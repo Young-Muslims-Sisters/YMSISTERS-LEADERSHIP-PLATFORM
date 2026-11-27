@@ -17,6 +17,38 @@ export const locationSchema = z.object({
   id: z.guid(),
 });
 
+// Position on a national team. Lead and Other also need text (what they lead, or the title).
+export const TEAM_TITLES = { chair: "Chair", co_chair: "Co-Chair", lead: "Lead", member: "Member", other: "Other" } as const;
+export type TeamTitle = keyof typeof TEAM_TITLES;
+const teamTitleSchema = z.enum(Object.keys(TEAM_TITLES) as [TeamTitle, ...TeamTitle[]]);
+
+// A position plus its details: a shura portfolio, or a position on a team.
+const positionFields = {
+  position: positionRefSchema.nullable(),
+  portfolio: tagValueSchema.nullable(),
+  teamTitle: teamTitleSchema.nullable(),
+  titleDetail: z.string().trim().max(100),
+};
+type PositionDetails = { position: string | null; teamTitle: TeamTitle | null; titleDetail: string };
+
+// Rules that need no reference data. A team needs a position on it when `teamRequired`.
+function checkDetails(p: PositionDetails, ctx: z.RefinementCtx, teamRequired: boolean) {
+  if (teamRequired && p.position?.startsWith("team:") && !p.teamTitle) {
+    ctx.addIssue({ code: "custom", path: ["teamTitle"], message: "Choose your position on the team" });
+  }
+  if (p.teamTitle === "lead" && !p.titleDetail.trim()) {
+    ctx.addIssue({ code: "custom", path: ["titleDetail"], message: "Say what you lead, e.g. Logistics" });
+  }
+  if (p.teamTitle === "other" && !p.titleDetail.trim()) {
+    ctx.addIssue({ code: "custom", path: ["titleDetail"], message: "Enter your title" });
+  }
+}
+
+const currentPosition = z.object(positionFields).superRefine((p, ctx) => checkDetails(p, ctx, true));
+
+export const YM_EMAIL_DOMAIN = "ymsisters.com";
+const ymEmailPattern = new RegExp(`^[^@\\s]+@${YM_EMAIL_DOMAIN.replace(".", "\\.")}$`, "i");
+
 const year = z
   .string()
   .trim()
@@ -36,10 +68,26 @@ export const contactSchema = z.object({
     .trim()
     .refine((v) => v.replace(/\D/g, "").length >= 10, "Enter a valid phone number")
     .refine((v) => v.length <= 30, "Enter a valid phone number"),
+  ymEmailStatus: z.enum(["has", "needs"]).nullable().refine((v) => v !== null, "Choose one option"),
+  ymEmail: z.string().trim().toLowerCase().max(254),
+}).superRefine((v, ctx) => {
+  if (v.ymEmailStatus === "has" && !ymEmailPattern.test(v.ymEmail)) {
+    ctx.addIssue({ code: "custom", path: ["ymEmail"], message: `Enter your YM email, ending in @${YM_EMAIL_DOMAIN}` });
+  }
+});
+
+// Where the person is in YM, and an optional mailing address.
+export const placeSchema = z.object({
   state: z.string().min(1, "Select your state"),
   location: locationSchema.nullable().refine((v) => v !== null, "Select your SR / Region"),
   neighborNetId: z.guid().nullable(),
+  addressLine1: z.string().trim().max(200),
+  addressLine2: z.string().trim().max(200),
+  city: z.string().trim().max(100),
+  addressState: z.string().max(100),
+  postalCode: z.string().trim().refine((v) => !v || /^\d{5}(-\d{4})?$/.test(v), "Enter a 5-digit ZIP code"),
 });
+
 
 export const involvementSchema = z.object({
   involvement: z.enum(["active_leadership", "cloud"]).nullable().refine((v) => v !== null, "Choose one option"),
@@ -47,7 +95,7 @@ export const involvementSchema = z.object({
 
 export const currentPositionsSchema = z.object({
   currentPositions: z
-    .array(z.object({ position: positionRefSchema.nullable().refine((v) => v !== null, "Choose a position or team") }))
+    .array(currentPosition.refine((p) => p.position !== null, { message: "Choose a position or team", path: ["position"] }))
     .min(1, "Add at least one current position")
     .max(10),
 });
@@ -58,14 +106,16 @@ export const previousPositionsSchema = z.object({
     .array(
       z
         .object({
-          position: positionRefSchema.nullable(),
+          ...positionFields,
+          description: z.string().trim().max(1000),
           fromYear: year.or(z.literal("")),
           toYear: year.or(z.literal("")),
         })
         .refine((p) => !p.fromYear || !p.toYear || Number(p.toYear) >= Number(p.fromYear), {
           message: "To Year must be the same as or after From Year",
           path: ["toYear"],
-        }),
+        })
+        .superRefine((p, ctx) => checkDetails(p, ctx, false)),
     )
     .max(20),
 });
@@ -83,19 +133,25 @@ export const educationSchema = z.object({
 });
 
 export const connectionsSchema = z.object({
-  organizations: z.array(tagValueSchema).max(20),
+  organizations: z
+    .array(z.object({ org: tagValueSchema, role: z.string().trim().max(100), details: z.string().trim().max(1000) }))
+    .max(20),
   anythingElse: z.string().trim().max(2000),
 });
 
 export const annualFormSchema = personalSchema
   .extend(contactSchema.shape)
+  .extend(placeSchema.shape)
   .extend(involvementSchema.shape)
-  .extend({ currentPositions: z.array(z.object({ position: positionRefSchema.nullable() })).max(10) })
+  .extend({ currentPositions: z.array(currentPosition).max(10) })
   .extend(previousPositionsSchema.shape)
   .extend(skillsSchema.shape)
   .extend(educationSchema.shape)
   .extend(connectionsSchema.shape)
   .superRefine((v, ctx) => {
+    if (v.ymEmailStatus === "has" && !ymEmailPattern.test(v.ymEmail)) {
+      ctx.addIssue({ code: "custom", path: ["ymEmail"], message: `Enter your YM email, ending in @${YM_EMAIL_DOMAIN}` });
+    }
     // Cloud skips the positions screen, so only Active needs one.
     if (v.involvement === "active_leadership" && !v.currentPositions.some((p) => p.position)) {
       ctx.addIssue({ code: "custom", path: ["currentPositions"], message: "Add at least one current position" });
@@ -104,6 +160,8 @@ export const annualFormSchema = personalSchema
 
 export type AnnualFormValues = z.input<typeof annualFormSchema>;
 export type ParsedAnnualForm = z.output<typeof annualFormSchema>;
+
+export const EMPTY_POSITION = { position: null, portfolio: null, teamTitle: null, titleDetail: "" };
 
 export const emptyForm: AnnualFormValues = {
   firstName: "",
@@ -115,10 +173,17 @@ export const emptyForm: AnnualFormValues = {
   state: "",
   location: null,
   neighborNetId: null,
+  ymEmailStatus: null,
+  ymEmail: "",
+  addressLine1: "",
+  addressLine2: "",
+  city: "",
+  addressState: "",
+  postalCode: "",
   involvement: null,
-  currentPositions: [{ position: null }],
+  currentPositions: [EMPTY_POSITION],
   noPreviousPositions: false,
-  previousPositions: [{ position: null, fromYear: "", toYear: "" }],
+  previousPositions: [{ ...EMPTY_POSITION, description: "", fromYear: "", toYear: "" }],
   skills: [],
   interests: [],
   educationStatus: [],

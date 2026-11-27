@@ -1,6 +1,6 @@
 import { Dialog } from "@/components/ui/Dialog";
 import { Facts, Pill, Section } from "@/components/ui/display";
-import { fullName, type Person, type Position } from "@/lib/directory/types";
+import { fullName, positionLabel, YM_EMAIL_STATUS, type Person, type Position } from "@/lib/directory/types";
 import { StatusBadge } from "./Directory";
 
 export const years = (p: Position) => [p.fromYear, p.toYear].filter(Boolean).join("–");
@@ -33,7 +33,7 @@ export function ProfileDrawer({ person: p, onClose }: { person: Person; onClose:
         <ul className="grid gap-2">
           {p.current.map((c, i) => (
             <li key={i} className="rounded-lg border border-sage-300 bg-white px-3 py-2">
-              <p className="text-[13px] font-semibold text-forest-950">{c.name}</p>
+              <p className="text-[13px] font-semibold text-forest-950">{positionLabel(c)}</p>
               {c.place && <p className="text-[12px] text-muted">{c.place}</p>}
             </li>
           ))}
@@ -44,9 +44,12 @@ export function ProfileDrawer({ person: p, onClose }: { person: Person; onClose:
         {p.previous.length === 0 && <p className="text-[13px] text-muted">No previous positions.</p>}
         <ul className="grid gap-2 text-[13px]">
           {p.previous.map((c, i) => (
-            <li key={i} className="flex justify-between gap-4">
-              <span>{c.name}</span>
-              <span className="shrink-0 text-muted">{years(c)}</span>
+            <li key={i}>
+              <div className="flex justify-between gap-4">
+                <span>{positionLabel(c)}</span>
+                <span className="shrink-0 text-muted">{years(c)}</span>
+              </div>
+              {c.description && <p className="mt-0.5 whitespace-pre-wrap text-muted">{c.description}</p>}
             </li>
           ))}
         </ul>
@@ -68,9 +71,29 @@ export function ProfileDrawer({ person: p, onClose }: { person: Person; onClose:
           ["School(s)", list(p.tags.school)],
           ["Field of study", list(p.tags.field_of_study)],
           ["Occupation", list(p.tags.occupation)],
-          ["Organizations", list(p.tags.organization)],
         ]} />
       </Section>
+
+      <Section title="Organizations">
+        {p.organizations.length === 0 && <p className="text-[13px] text-muted">—</p>}
+        <ul className="grid gap-3 text-[13px]">
+          {p.organizations.map((o) => (
+            <li key={o.name}>
+              <p className="font-semibold text-forest-950">{o.name}{o.role && <span className="font-normal text-muted"> · {o.role}</span>}</p>
+              {o.details && <p className="mt-0.5 whitespace-pre-wrap text-ink">{o.details}</p>}
+            </li>
+          ))}
+        </ul>
+      </Section>
+
+      {p.private && (
+        <Section title="Private: IT and National Shura only" warm>
+          <Facts rows={[
+            ["YM email", p.private.ymEmail ?? (p.private.ymEmailStatus ? YM_EMAIL_STATUS[p.private.ymEmailStatus] : null)],
+            ["Mailing address", p.private.address],
+          ]} />
+        </Section>
+      )}
     </Dialog>
   );
 }

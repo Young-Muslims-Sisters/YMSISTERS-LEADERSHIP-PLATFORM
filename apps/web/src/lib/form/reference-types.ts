@@ -7,7 +7,7 @@ export type ReferenceData = {
   subregions: Option[];
   // Belongs to a subregion or a region; region NeighborNets are grouped by state.
   neighborNets: (Option & { parentId: string; state: string | null })[];
-  roleTypes: (Option & { scopeLevel: "national" | "region" | "subregion" | "neighbor_net" | "other" })[];
+  roleTypes: (Option & { scopeLevel: "national" | "region" | "subregion" | "neighbor_net" | "other"; hasPortfolio: boolean })[];
   teams: Option[];
   tags: {
     skill: Option[];

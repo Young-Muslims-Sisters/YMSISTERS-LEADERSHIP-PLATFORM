@@ -5,6 +5,7 @@ import type { AnnualFormValues, TagValue } from "@/lib/form/schema";
 import type { ComboOption } from "../Combobox";
 import { Card, TextButton } from "../fields";
 import { FormFooter, PrimaryButton } from "../FormFooter";
+import { positionDetail } from "../PositionFields";
 import { locationOptions, positionOptions, type Screen } from "./shared";
 
 export function ReviewScreen({ values, reference, onEdit, onBack, onServerErrors, onDone }: {
@@ -21,12 +22,17 @@ export function ReviewScreen({ values, reference, onEdit, onBack, onServerErrors
   const list = (tags: TagValue[]) => tags.map((t) => t.label).join(", ");
 
   const isCloud = values.involvement === "cloud";
-  const current = isCloud ? [] : values.currentPositions.map((p) => label(positions, p.position)).filter(Boolean);
+  const named = (p: (typeof values.currentPositions)[number]) => {
+    const name = label(positions, p.position);
+    const detail = positionDetail(p);
+    return name && detail ? `${name} · ${detail}` : name;
+  };
+  const current = isCloud ? [] : values.currentPositions.map(named).filter(Boolean);
   const nn = reference.neighborNets.find((n) => n.id === values.neighborNetId)?.label;
   const birthday = values.birthday ? new Date(`${values.birthday}T00:00:00`).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "";
 
   const previous = values.previousPositions.flatMap((p) => {
-    const name = label(positions, p.position);
+    const name = named(p);
     const years = [p.fromYear, p.toYear].filter(Boolean).join("–");
     return name ? [years ? `${name}, ${years}` : name] : [];
   });
@@ -39,8 +45,14 @@ export function ReviewScreen({ values, reference, onEdit, onBack, onServerErrors
     },
     {
       title: "Contact Details",
-      summary: join([values.email, values.phone, values.state, values.location && label(loc, `${values.location.kind}:${values.location.id}`), nn]),
+      summary: join([values.email, values.phone, values.ymEmail || (values.ymEmailStatus === "needs" ? "Needs a YM email" : "")]),
       screen: "contact",
+    },
+    {
+      title: "Your Location",
+      summary: join([values.state, values.location && label(loc, `${values.location.kind}:${values.location.id}`), nn,
+        [values.addressLine1, values.city].filter(Boolean).join(", ")]),
+      screen: "location",
     },
     { title: "YM Involvement", summary: isCloud ? "Interested in Cloud" : "Active Leadership", screen: "involvement" },
     ...(isCloud ? [] : [{ title: "Current Leadership", summary: join(current), screen: "current" as const }]),
@@ -57,7 +69,7 @@ export function ReviewScreen({ values, reference, onEdit, onBack, onServerErrors
     },
     {
       title: "Background & Connections",
-      summary: join([list(values.organizations), values.anythingElse]),
+      summary: join([values.organizations.map((o) => (o.role ? `${o.org.label} (${o.role})` : o.org.label)).join(", "), values.anythingElse]),
       screen: "connections",
     },
   ];

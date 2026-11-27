@@ -1,10 +1,11 @@
 import type { ReferenceData } from "@/lib/form/reference-types";
-import { AddButton, Card, CardTitle, TextButton } from "../fields";
-import { PositionSelect } from "../PositionSelect";
+import { EMPTY_POSITION } from "@/lib/form/schema";
+import { AddButton, Card, CardTitle, Label, TextButton, inputClass } from "../fields";
+import { PositionFields } from "../PositionFields";
 import { YearPicker } from "../YearPicker";
 import { fieldId, type ScreenProps } from "./shared";
 
-const EMPTY = { position: null, fromYear: "", toYear: "" };
+const EMPTY = { ...EMPTY_POSITION, description: "", fromYear: "", toYear: "" };
 
 export function PreviousScreen({ values, set, err, reference, cycleYear }: ScreenProps & { reference: ReferenceData; cycleYear: number }) {
   const list = values.previousPositions;
@@ -29,8 +30,9 @@ export function PreviousScreen({ values, set, err, reference, cycleYear }: Scree
                   <TextButton onClick={() => set("previousPositions", list.filter((_, j) => j !== i))}>Remove</TextButton>
                 )}
               </div>
-              <PositionSelect id={fieldId(`previousPositions.${i}.position`)} label="Position" value={p.position}
-                onChange={(v) => update(i, { position: v })} reference={reference} />
+              <PositionFields id={fieldId(`previousPositions.${i}`)} label="Position" value={p}
+                onChange={(patch) => update(i, patch)} reference={reference}
+                err={(field) => err(`previousPositions.${i}.${field}`)} />
               <div className="mt-4 grid gap-x-4 gap-y-6 sm:grid-cols-2">
                 <YearPicker id={fieldId(`previousPositions.${i}.fromYear`)} label="From Year" value={p.fromYear}
                   onChange={(v) => update(i, { fromYear: v })} maxYear={cycleYear}
@@ -39,6 +41,13 @@ export function PreviousScreen({ values, set, err, reference, cycleYear }: Scree
                   onChange={(v) => update(i, { toYear: v })} maxYear={cycleYear}
                   minYear={p.fromYear ? Number(p.fromYear) : undefined}
                   error={err(`previousPositions.${i}.toYear`)} />
+              </div>
+              <div className="mt-4">
+                <Label htmlFor={fieldId(`previousPositions.${i}.description`)}>What did you do in this role?</Label>
+                <textarea id={fieldId(`previousPositions.${i}.description`)} rows={3} maxLength={1000} value={p.description}
+                  onChange={(e) => update(i, { description: e.target.value })}
+                  placeholder="Projects, events or anything you’re proud of"
+                  className={`${inputClass} h-auto min-h-[90px] resize-y py-3`} />
               </div>
             </div>
           ))}
